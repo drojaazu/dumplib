@@ -1,0 +1,5 @@
+E:\Work\Development\romimage\ROMimage\ROMimage\bin\Debug\ROMimage.dll
+E:\Work\Development\romimage\ROMimage\ROMimage\bin\Debug\ROMimage.pdb
+E:\Work\Development\romimage\ROMimage\ROMimage\obj\Debug\ROMimage.csprojResolveAssemblyReference.cache
+E:\Work\Development\romimage\ROMimage\ROMimage\obj\Debug\ROMimage.dll
+E:\Work\Development\romimage\ROMimage\ROMimage\obj\Debug\ROMimage.pdb

@@ -1,0 +1,139 @@
+﻿ SNES header   Edit    Talk0 81PAGES ON
+THIS WIKI
+Every ROM for the SNES contains a SNES header of 64 bytes. This is not the same as the SMC header. A "headerless ROM" has no SMC header, but still contains a SNES header. Other names for the SNES header are the internal header or the embedded cartridge information.
+The SNES header contains some information about the cartridge. Emulators use this information to decide the type of emulation. The SNES header also contains the interrupt vectors, so that the 65816 can call the interrupt handlers. Please understand that a real SNES never uses any information in the SNES header except the interrupt vectors. Only emulators and ROM-hacking tools use the other information.
+
+If you want to add more hardware (like more save-RAM) to a game, then you want to hack the SNES header.
+
+Contents [show] 
+Location Edit
+The SNES header always starts at SNES address $00ffc0. This address corresponds to one of four offsets in the ROM image. So the SNES header is at
+offset 0x7fc0 in a headerless LoROM image
+offset 0xffc0 in a headerless HiROM image
+offset 0x81c0 in a headered LoROM image
+offset 0x101c0 in a headered HiROM image
+If you find the SNES header, then you know from its offset whether the image LoROM or HiROM, and whether the image starts with the 512-byte SMC header.
+Format Edit
+The SNES header fills the 64 bytes in the SNES addresses $00ffc0..$00ffff. The format of the header was originally whatever Nintendo required in licensed games. Today, the format is whatever the emulators understand, with the caveat that the emulators must understand all licensed games.
+The checksum complement, the checksum and the interrupt vectors are 16-bit integers in little-endian format.
+
+$ffc0..$ffd4 => Name of the ROM, typically in ASCII, using spaces to pad the name to 21 bytes.
+$ffd5 => ROM layout, typically $20 for LoROM, or $21 for HiROM. Add $10 for FastROM.
+$ffd6 => Cartridge type, typically $00 for ROM only, or $02 for ROM with save-RAM.
+$ffd7 => ROM size byte.
+$ffd8 => RAM size byte.
+$ffd9 => Country code, which selects the video in the emulator. Values $00, $01, $0d use NTSC. Values in range $02..$0c use PAL. Other values are invalid.
+$ffda => Licensee code. If this value is $33, then the ROM has an extended header with ID at $ffb2..$ffb5.
+$ffdb => Version number, typically $00.
+$ffdc..$ffdd => Checksum complement, which is the bitwise-xor of the checksum and $ffff.
+$ffde..$ffdf => SNES checksum, an unsigned 16-bit checksum of bytes.
+$ffe0..$ffe3 => Unknown.
+$ffe4..$ffef => Table of interrupt vectors for native mode.
+$ffe4 => COP
+$ffe6 => BRK
+$ffe8 => ABORT
+$ffea => NMI (vertical blank)
+$ffec => unused
+$ffee => IRQ
+$fff0..$fff3 => Unknown.
+$fff4..$ffff => Table of interrupt vectors for emulation mode.
+$fff4 => COP
+$fff6 => unused
+$fff8 => ABORT
+$fffa => NMI (vertical blank)
+$fffc => RESET (start game)
+$fffe => IRQ or BRK
+Name ($ffc0..$ffd4) Edit
+The 21 bytes at $ffc0..$ffd4 give the name of the ROM. The name is often in ASCII, so this is a rare chance to see ASCII in the ROM, because game text tends to have a non-ASCII encoding for game text. A better name contains no control characters ($00..$1f or $7f). The name is exactly 21 bytes long. You can pad a shorter name with spaces to reach 21 bytes.
+ROM hackers sometimes change this name to the name of the ROM hack. Some of the original names LOOK LIKE THIS and contain no lowercase letters ($61..$7a), but there is no problem with lowercase letters, so some ROM hackers use them.
+
+If you use wla-65816 to set the name, but your name is shorter than 21 bytes, then wla-65816 will pad the name with '\0' characters. For this reason, you might find a '\0'-terminated name. Most names have no '\0' terminator.
+
+Some references also mention names that contain bytes in the $80..$ff range. This might be a Japanese encoding, perhaps Shift-JIS?
+
+ROM layout ($ffd5) Edit
+This byte at $ffd5 is a bitwise-or of these flags:
+$20 is always set.
+$10 is set when using FastROM.
+$01 is set for HiROM or cleared for LoROM.
+Thus the possible values in address $ffd5 are:
+$20 => LoROM, not fast
+$21 => HiROM, not fast
+$30 => LoROM, fast
+$31 => HiROM, fast
+Cartridge type ($ffd6) Edit
+This byte at $ffd6 indicates the hardware in the cartridge. Emulators use this byte to decide which hardware to emulate. (A real SNES ignores this byte and uses the real hardware in the real cartridge.)
+$00 => The cartridge contains only ROM.
+$01 => The cartridge contains ROM and RAM but no battery.
+$02 => The cartridge contains ROM and save-RAM (with a battery).
+If you want the emulators to add save-RAM to a type $00 game, then you can change byte $ffd6 from $00 to $02, and set byte $ffd8 (the RAM size byte) to somewhere in range $01..$05.
+Values greater than $02 indicate special add-on hardware in the cartridge. The caveat is that emulators like Snes9x may ignore these values unless the add-on (at $ffd6) is compatible with the ROM layout (at $ffd5).
+
+$13 => SuperFX with no battery
+$14 => SuperFX with no battery
+$15 => SuperFX with save-RAM
+$1a => SuperFX with save-RAM
+$34 => SA-1
+$35 => SA-1
+This list is not complete.
+ROM and RAM size bytes ($ffd7 and $ffd8) Edit
+Byte $ffd7 indicates the amount of ROM in the cartridge; byte $ffd8 indicates the amount of RAM in the cartridge (excluding the RAM in the SNES system). Both bytes use the same scale.
+$00 => no RAM
+$01 => $800 bytes == 2 kilobytes, amount of RAM in Super Mario World
+$02 => $1000 bytes == 4 kilobytes
+$03 => $2000 bytes == 8 kilobytes
+$04 => $4000 bytes == 16 kilobytes
+$05 => $8000 bytes == 32 kilobytes, amount of RAM in Mario Paint
+$06 => $10000 bytes == 64 kilobytes
+$07 => $20000 bytes == 128 kilobytes, amount of RAM in Dezaemon - Kaite Tsukutte Asoberu
+$08 => $40000 bytes == 256 kilobytes, minimum for ROM
+$09 => $80000 bytes == 512 kilobytes, amount of ROM in Super Mario World
+$0a => $100000 bytes == 1 megabyte, amount of ROM in Mario Paint
+$0b => $200000 bytes == 2 megabytes
+$0c => $400000 bytes == 4 megabytes
+A good value is always in the correct range for ROM or RAM.
+$00..$05 is the range for $ffd8, for RAM of zero to 32 kilobytes.
+$06..$07 is not used.
+$08..$0c is the range for $ffd7, for ROM of 256 kilobytes to 4 megabytes.
+Real SNES cartridges seem to have have at least size $08 (256 kilobytes), but an emulator might be able to load ROM as small as size $05 (32 kilobytes, one LoROM bank). The maximum of $07 for RAM and $0c for ROM is a limitation of the two common SNES ROM layouts, LoROM and HiROM. Other layouts might exceed these maximums.
+The RAM size byte ($ffd8) determines the size of save-RAM in the emulators. The ROM size byte ($ffd7) might be less influential. Snes9x sometimes ignores the ROM size byte and uses the actual size of the ROM image. An important part of ROM expansion is to correctly set $ffd7; but an expanded ROM with a wrong $ffd7 might continue to work in Snes9x.
+
+Country code (byte $ffd9) Edit
+Some references provide a list of countries and their country codes. When I see these lists, I have to wonder why Canada is missing. The importance of the country code in byte $ffd9 is not for the country, but for the decision to emulate NTSC or PAL.
+The possible values of the country code (byte $ffd9) are:
+
+$00..$01 => NTSC
+$02..$0c => PAL
+$0d => NTSC
+$0e..$ff => invalid
+When you hack an existing ROM, you can preserve byte $ffd9. When you hack a new ROM, you use byte $ffd9 to select NTSC emulation or PAL emulation. You must not invent a new code for Canada or any other country, unless the emulators agree whether the new code is NTSC or PAL.
+License (byte $ffda) Edit
+Nintendo assigned to each licensee a code to put in byte $ffda. First-party Nintendo games used code 0x01; other licensed games used codes in range 0x02..0xff.
+Licensee code 0x33 is special, because 0x33 implies an extended header at bytes $ffb2..$ffb5. So many ROM images use 0x33, that emulators like BSNES, MESS and Snes9x assign higher scores to candidate SNES headers that have 0x33 in $ffda.
+
+ROM hackers tend to retain the existing licensee code. For example, Super Mario World uses 0x01, so most SMW hacks also use 0x01.
+
+When creating a new SNES header in a new ROM image, some ROM hackers use licensee code 0x00, because Nintendo never assigned 0x00. Some ROM hackers use licensee code 0x33, because emulators like 0x33.
+
+You can also use code 0x33 without an extended header, because emulators like 0x33 whether or not the extended header is there.
+
+Version (byte $ffdb) Edit
+The byte at $ffdb for the version typically contains $00. Most ROM hackers never touch this byte, so multiple versions of a ROM hack may share the same value of byte $ffdb. A few ROM hackers actually set this byte. You can ignore this byte.
+Checksum (bytes $ffde..$ffdf) and complement (bytes $ffdc..$ffdd) Edit
+See SNES checksum.
+In brief, the checksum is the unsigned little-endian 16-bit sum of the values of the bytes in the ROM. If the size of the ROM is not a power of 2, then some bytes may enter the sum multiple times through mirroring. The checksum complement is the bitwise-xor of the checksum with $ffff. If you hack the ROM, then you want to compute the new checksum and update these four bytes.
+
+One of the hacking tools for Super Mario World likes to forge an equal checksum, so that many SMW hacks have the same complement/checksum of $5f25/$a0da.
+
+Extended header (bytes $ffb2..$ffb5) Edit
+Some ROM images extend the SNES header, adding new fields before byte $ffc0. An image with an extended header probably has 0x33 in $ffda.
+The extended header consists of at least the four bytes at $ffb2..$ffb5. The bytes at $ffb0, $ffb1 and $ffb6..$ffbf might also be part of the extended header. We have almost no documents about the extended header. Emulators tend to examine only $ffb2..$ffb5.
+
+$ffb2..$ffb5 tends to contain four uppercase ASCII characters. Here are some examples.
+
+Donkey Kong Country 2, American version, has "ADNE"
+N-Warp Daisakusen has hexadecimal AA 30 AA 30
+Skipp and Friends has "GAME"
+Hacks using the header from Wikibooks have "SNES"
+You can pick any four letters, like "GAME" or "SNES".
+Licensed hacks (like DKC2) seem to have a pattern to the four letters. The first letter tends to be "A". The next letters ("DN" in DKC2) might identify the licensee. The last letter might be a language code, like "E" for English or "J" for Japanese (though the American DKC2 has both English and French).

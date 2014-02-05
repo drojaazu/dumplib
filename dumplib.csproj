@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{124C75E7-2847-4D7E-B936-960F4485A03F}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ROMlib</RootNamespace>
+    <AssemblyName>ROMlib</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Compression\kosinski.cs" />
+    <Compile Include="Gfx\misc.cs" />
+    <Compile Include="Gfx\paletteview.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Gfx\tilegfx.cs" />
+    <Compile Include="Gfx\palettes.cs" />
+    <Compile Include="MediaImage\disk_NintendoFamicomDiskSys.cs" />
+    <Compile Include="MediaImage\disk_Unknown.cs" />
+    <Compile Include="MediaImage\mediaimage.cs" />
+    <Compile Include="Layout\chunktypes.cs" />
+    <Compile Include="Layout\imagemap.cs" />
+    <Compile Include="Layout\range.cs" />
+    <Compile Include="MediaImage\ROM_NintendoVirtualBoy.cs" />
+    <Compile Include="MediaImage\ROM_SNKNeoGeoPocket.cs" />
+    <Compile Include="MediaImage\ROM_Unknown.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="misc.cs" />
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+    <Compile Include="MediaImage\ROM_Sega32X.cs" />
+    <Compile Include="MediaImage\ROM_Sega8bit.cs" />
+    <Compile Include="MediaImage\ROM_NintendoFamicom.cs" />
+    <Compile Include="MediaImage\ROM_NintendoGameboyAdvance.cs" />
+    <Compile Include="Search\search.cs" />
+    <Compile Include="Text\logicaltable.cs" />
+    <Compile Include="Text\table.cs" />
+    <Compile Include="MediaImage\ROM_Nintendo64.cs" />
+    <Compile Include="MediaImage\ROM_NintendoGameboy.cs" />
+    <Compile Include="MediaImage\ROM_SegaMegadrive.cs" />
+    <Compile Include="MediaImage\ROM_NintendoSuperFamicom.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Text\transcode.cs">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="_Documentation\consolegfx.txt" />
+    <Content Include="_Documentation\sv.txt" />
+    <Content Include="_Documentation\TileLayer_Pro_palette_file_format_v1.0.txt" />
+    <Content Include="_Documentation\genesis rom format 1.txt" />
+    <Content Include="_Documentation\genesis rom header 1.txt" />
+    <Content Include="_Documentation\snes header.txt" />
+    <Content Include="_Documentation\SNESMem.txt" />
+    <Content Include="_Documentation\Table File Format.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Gfx\paletteview.resx">
+      <DependentUpon>paletteview.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
