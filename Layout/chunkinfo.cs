@@ -7,92 +7,120 @@ using System.ComponentModel;
 
 namespace dumplib.Layout
 {
-    public enum ChunkTypes : byte
+    public interface IChunkInfo
     {
-        [Description("Unknown")]
-        Unknown = 0,
-        [Description("Text")]
-        Text = 1,
-        [Description("Pointer Table")]
-        PointerTable = 2,
-        [Description("Compressed Data")]
-        Compressed = 3,
-        [Description("Compiled Code")]
-        CompiledCode = 4,
-        [Description("Graphics")]
-        Graphics = 5,
-        [Description("Palette")]
-        Palette = 6,
-        [Description("ASCII Text")]
-        ASCII = 7,
-        [Description("SJIS Text")]
-        SJIS = 8,
-        [Description("File on disk")]
-        File = 9,
-        [Description("Generic")]
-        Generic = 0xff
+        string Description
+        {
+            get;
+        }
+
+        Range Addr
+        {
+            get;
+        }
+
+        // passed a line from the image map, will parse it and apply all the options
+        void ParseArgs(string[] Options);
     }
 
-    public abstract class ChunkEntry
+    /*public abstract class ChunkInfo
     {
-        public ChunkEntry(Range Addr, string Description, string[] Args)
+        public ChunkInfo(Range Addr, string Description)
         {
+            if (Addr == null) throw new ArgumentNullException();
             this.Addr = Addr;
+            if (string.IsNullOrEmpty(Description)) Description = string.Format("{0} bytes of data", Addr.Length);
             this.Description = Description;
         }
 
-        public Range Addr
+        public abstract Range Addr
         {
             get;
-            private set;
+            protected set;
+        }
+
+        public abstract string Description
+        {
+            get;
+            protected set;
+        }
+    }*/
+
+    /// <summary>
+    /// Describes a generic chunk of data
+    /// </summary>
+    public class DataChunkInfo : IChunkInfo
+    {
+        public DataChunkInfo(Range Addr = null, string Description = null)
+        {
+            if(string.IsNullOrEmpty(Description)) Description = "Data chunk";
+            this.Description = Description;
+            this.Addr = Addr;
         }
 
         public string Description
         {
             get;
-            private set;
+            protected set;
         }
 
-        public ChunkTypes Type
+        public Range Addr
         {
             get;
             protected set;
         }
-    }
 
-    /// <summary>
-    /// Describes a generic chunk of data
-    /// </summary>
-    public class Chunk : ChunkEntry
-    {
-        public Chunk(Range Addr, string Description, string[] Args = null) :
-            base(Addr, Description, Args)
+        public void ParseArgs(string[] Options)
         {
-            base.Type = ChunkTypes.Generic;
+
         }
     }
 
     /// <summary>
     /// Describes a file on a disk
     /// </summary>
-    public class FileChunk : ChunkEntry
+    public class FileChunkInfo : IChunkInfo
     {
-        public FileChunk(Range Addr, string Description, string[] Args = null) :
-            base(Addr, Description, Args)
+        public FileChunkInfo(Range Addr = null, string Description = null)
         {
-            base.Type = ChunkTypes.File;
+            if (string.IsNullOrEmpty(Description)) Description = "File on disk";
+            this.Description = Description;
+            this.Addr = Addr;
+        }
+
+        public string Description
+        {
+            get;
+            protected set;
+        }
+
+        public Range Addr
+        {
+            get;
+            protected set;
+        }
+
+        public void ParseArgs(string[] Options)
+        {
+
         }
     }
 
     /// <summary>
     /// Describes a chunk of graphics data
     /// </summary>
-    public class GfxChunk : ChunkEntry
+    public class GfxChunkInfo : IChunkInfo
     {
-        public GfxChunk(Range Addr, string Description, string[] Args = null) :
-            base(Addr, Description, Args)
+        public GfxChunkInfo(Range Addr = null, string Description = null)
         {
-            base.Type = ChunkTypes.Graphics;
+            if (Description == null) Description = string.Format("Graphics chunk");
+            this.Description = Description;
+            this.Addr = Addr;
+            this.TilesPerRow = null;
+            this.Subpalette = null;
+            
+
+            /*
             // if there is an argument array, cycle through them
             if (Args != null)
             {
@@ -132,25 +160,65 @@ namespace dumplib.Layout
                     }
                 }
             }
+             * */
         }
 
-        public Gfx.TileFormats Format
+        public string Description
         {
             get;
-            private set;
+            protected set;
         }
 
-        public int Subpalette
+        public Range Addr
         {
             get;
-            private set;
+            protected set;
         }
 
-        public string Title
+        public string TileConverter
+        {
+            get;
+            protected set;
+        }
+
+        public int? Subpalette
+        {
+            get;
+            set;
+        }
+
+
+        private int? tilesperrow;
+        public int? TilesPerRow
         {
             get
             {
-                return "Graphics @ " + this.Addr.StartOffset.ToString("X") + " " + this.Description;
+                return this.tilesperrow;
+            }
+            set
+            {
+                if (value < 1) value = 1;
+                this.tilesperrow = value;
+            }
+        }
+
+        public void ParseArgs(string[] Options)
+        {
+            if (Options != null && Options.Length > 0)
+            {
+                string[] argsplit;
+                for (int argloop = 0; argloop < Options.Length; argloop++)
+                {
+                    argsplit = Options[argloop].Split('=');
+                    switch (argsplit[0].ToLower())
+                    {
+                        case "format":
+                            this.TileConverter = argsplit[1];
+                            break;
+                        default:
+                            break;
+                    }
+                }
             }
         }
     }
@@ -158,15 +226,17 @@ namespace dumplib.Layout
     /// <summary>
     /// Describes a chunk of text data
     /// </summary>
-    public class TextChunk : ChunkEntry
+    public class TextChunkInfo : IChunkInfo
     {
         // Block of in-game text
 
-        public TextChunk(Range Addr, string Description, string[] Args = null) :
-            base(Addr, Description, Args)
+        public TextChunkInfo(Range Addr = null, string Description = null)
         {
-            base.Type = ChunkTypes.Text;
-            this.UsesTextTable = true;
+            this.UseTextTable = true;
+            this.Addr = Addr;
+            if (string.IsNullOrEmpty(Description)) Description = "Text chunk";
+            this.Description = Description;
+            /*
             if (Args != null)
             {
                 string[] argsplit;
@@ -203,67 +273,88 @@ namespace dumplib.Layout
                     }
                 }
             }
+            */
+
+            this.Encoding = null;
+            this.UseTextTable = null;
+            this.TableID = null;
         }
 
-        public bool UsesTextTable
+        public Range Addr
         {
             get;
             private set;
+        }
+
+        public string Description
+        {
+            get;
+            private set;
+        }
+
+        public bool? UseTextTable
+        {
+            get;
+            set;
         }
 
         public Encoding Encoding
         {
             get;
-            private set;
+            set;
         }
 
         public string TableID
         {
             get;
-            private set;
+            set;
         }
 
-        public string Title
+        public void ParseArgs(string[] Options)
         {
-            get
-            {
-                return "Text @ " + this.Addr.StartOffset.ToString("X") + " " + this.Description;
-            }
+
         }
     }
 
     /// <summary>
     /// Describes a chunk of pointer data
     /// </summary>
-    public class PointerChunk : ChunkEntry
+    /*public class PointerChunkInfo : ChunkInfo
     {
         // Pointer table
-        public PointerChunk(Range Addr, string Description, string[] Args = null) :
-            base(Addr, Description, Args)
+        public PointerChunkInfo(Range Addr, string Title = null) :
+            base(Addr, Title)
         {
             base.Type = ChunkTypes.PointerTable;
+            base.Title = Title;
         }
 
-        public string Title
-        {
-            get
-            {
-                return "Pointer Table @ " + this.Addr.StartOffset.ToString("X") + " " + this.Description;
-            }
-        }
-    }
+    }*/
 
     /// <summary>
     /// Describes a chunk of machine language
     /// </summary>
-    public class CodeChunk : ChunkEntry
+    public class CodeChunkInfo : IChunkInfo
     {
         // Block of compiled code
 
-        public CodeChunk(Range Addr, string Description, string[] Args = null) :
-            base(Addr, Description, Args)
+        public CodeChunkInfo(Range Addr = null, string Description = null)
         {
-            base.Type = ChunkTypes.CompiledCode;
+            this.Addr = Addr;
+            if (string.IsNullOrEmpty(Description)) Description = "Code chunk";
+            this.Description = Description;
+        }
+
+        public string Description
+        {
+            get;
+            private set;
+        }
+
+        public Range Addr
+        {
+            get;
+            private set;
         }
 
         private string cpu;
@@ -272,24 +363,38 @@ namespace dumplib.Layout
             get { return this.cpu; }
         }
 
-        public string Title
+        public void ParseArgs(string[] Options)
         {
-            get
-            {
-                return "Code @ " + this.Addr.StartOffset.ToString("X") + " " + this.Description;
-            }
+
         }
     }
 
     /// <summary>
     /// Describes a chunk of compressed data
     /// </summary>
-    public class CompressedChunk : ChunkEntry
+    public class CompressedChunkInfo : IChunkInfo
     {
-        public ChunkTypes DecompressedType
+        public IChunkInfo DecompressedType
         {
             get;
             private set;
+        }
+
+        public Range Addr
+        {
+            get;
+            private set;
+        }
+
+        public string Description
+        {
+            get;
+            private set;
+        }
+
+        public void ParseArgs(string[] Options)
+        {
+
         }
 
         public dumplib.Compression.CompressionFormats Compression
@@ -298,13 +403,12 @@ namespace dumplib.Layout
             private set;
         }
         
-        public CompressedChunk(Range Addr, string Description, string[] Args = null) :
-            base(Addr, Description, Args)
+        public CompressedChunkInfo(Range Addr = null, string Description = null)
         {
-            base.Type = ChunkTypes.Compressed;
-            this.DecompressedType = ChunkTypes.Unknown;
-            this.Compression = dumplib.Compression.CompressionFormats.Unknown;
-
+            if (string.IsNullOrEmpty(Description)) Description = "Compressed chunk";
+            this.Description = Description;
+            this.Addr = Addr;
+            /*
             if (Args != null)
             {
                 string[] tempsplit;
@@ -329,14 +433,7 @@ namespace dumplib.Layout
                     }
                 }
             }
-        }
-
-        public string Title
-        {
-            get
-            {
-                return "Compressed Data @ " + this.Addr.StartOffset.ToString("X") + " " + this.Description;
-            }
+             */
         }
     }
 }

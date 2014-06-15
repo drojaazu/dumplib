@@ -12,7 +12,7 @@ namespace dumplib.Image
             : base(Filepath)
         {
             base.MediaType = MediaTypes.Disk;
-            base.ReadWholeFile();
+            //base.ReadWholeFile();
             base.SoftwareTitle = "Unknown disk";
         }
     }

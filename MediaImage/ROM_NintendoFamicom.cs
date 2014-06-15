@@ -8,11 +8,40 @@ namespace dumplib.Image
     /// </summary>
     public class NintendoFamicom_ROM : MediaImage
     {
-        public Dump.Formats Format
+
+        private readonly static string HW_Worldwide = "Nintendo Entertainment System (NES)";
+        private readonly static string HW_JP_R = "Nintendo Family Computer (Famicom)";
+        private readonly static string HW_JP = "ニンテンドー　ファミリーコンピュータ(ファミコン)";
+
+        public string HardwareName_Worldwide
+        {
+            get
+            {
+                return NintendoFamicom_ROM.HW_Worldwide;
+            }
+        }
+
+        public string HardwareName_Japan
+        {
+            get
+            {
+                return NintendoFamicom_ROM.HW_JP;
+            }
+        }
+
+        public string HardwareName_JapanRomaji
+        {
+            get
+            {
+                return NintendoFamicom_ROM.HW_JP_R;
+            }
+        }
+
+        /*public Dump.Formats Format
         {
             get;
             private set;
-        }
+        }*/
 
         private Dump.iNESHeader inesheader = null;
 
@@ -20,30 +49,31 @@ namespace dumplib.Image
             : base(_file)
         {
             base.MediaType = MediaTypes.ROM;
-            base.ReadWholeFile();
-            this.Format = Dump.GetDumpType(base.Data);
-            switch (this.Format)
+            base.HardwareName = NintendoFamicom_ROM.HW_Worldwide;
+            //base.ReadWholeFile();
+            //this.Format = Dump.GetDumpType(base.Data);
+            /*switch (this.Format)
             {
                 case Dump.Formats.iNES:
                     this.inesheader = new Dump.iNESHeader(base.Data);
                     base.Data = Dump.Standardize(base.Data, this.Format);
                     break;
-            }
+            }*/
             base.SoftwareTitle = "[Nintendo Famicom software]";
         }
 
         // function to add 'proper' iNES header
 
-        public override ImageMap AutoMap()
+        /*public override ImageMap AutoMap()
         {
             var _out = base.AutoMap();
             if(this.inesheader != null){
-                _out.Add(new Chunk(new Range(0,(uint)(16384*this.inesheader.PRG_Chunks)),"PRG ROM"));
+                _out.Add(new DataChunkInfo(new Range(0,(uint)(16384*this.inesheader.PRG_Chunks)),"PRG ROM"));
                 if (this.inesheader.CHR_Chunks != 0)
-                    _out.Add(new Chunk(new Range((uint)(16384 * this.inesheader.PRG_Chunks), (uint)(8192 * this.inesheader.CHR_Chunks)), "CHR ROM"));
+                    _out.Add(new DataChunkInfo(new Range((uint)(16384 * this.inesheader.PRG_Chunks), (uint)(8192 * this.inesheader.CHR_Chunks)), "CHR ROM"));
             }
             return _out;
-        }
+        }*/
 
         static public class Dump
         {

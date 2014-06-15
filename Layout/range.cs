@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace dumplib.Layout
 {
     /// <summary>
     /// References a location inside a serial block of data
-    /// Uses uint for addressing (max. 4gb of data)
     /// </summary>
     public class Range
     {
@@ -17,73 +14,60 @@ namespace dumplib.Layout
             return "Offset: " + this.StartOffset.ToString("X") + " Length: " + this.Length.ToString("X");
         }
 
-        public uint StartOffset
+        public long StartOffset
         {
             get;
             private set;
         }
 
-        public uint Length
+        public int Length
         {
             get;
             private set;
         }
 
-        public uint EndOffset
+        public long EndOffset
         {
             get
             {
-                return (this.StartOffset + this.Length) - 1;
+                return this.StartOffset + this.Length;
             }
         }
 
         /// <summary>
-        /// Defines a chunk of data inside an sequential data structure
+        /// Defines the boundaries of a section of data inside a sequential data structure
         /// </summary>
         /// <param name="Offset">Starting index of the data</param>
         /// <param name="Length">Number of bytes</param>
-        public Range(uint Offset, uint Length)
+        public Range(long Offset, int Length)
         {
-            if (Length < 1) throw new ArgumentException("Length cannot be zero");
+            if (Length < 1) throw new ArgumentException("Length must be at least 1");
 
             this.StartOffset = Offset;
             this.Length = Length;
         }
 
         /// <summary>
-        /// Defines a chunk of data inside an sequential data structure
+        /// Defines the boundaries of a section of data inside a sequential data structure
         /// </summary>
         /// <param name="Offset">Starting index of the data (Input must be a properly formatted hex string)</param>
         /// <param name="Length">Number of bytes (Input must be a properly formatted hex string)</param>
         public Range(string Offset, string Length)
         {
-            if (Offset == string.Empty || Length == string.Empty)
-                throw new ArgumentException("Argument is empty");
+            if(string.IsNullOrEmpty(Offset) || string.IsNullOrEmpty(Length))
+                throw new ArgumentException();
 
-            if (IsValidHex(Offset) && IsValidHex(Length))
-                {
-                    this.StartOffset = uint.Parse(Offset, System.Globalization.NumberStyles.HexNumber);
-                    this.Length = uint.Parse(Length, System.Globalization.NumberStyles.HexNumber);
-                }
-                else
-                    // I told you...
-                    throw new FormatException("Argument is not a properly formatted hexadecimal number");
+            long tempoffset; int templength;
+            if (!long.TryParse(Offset, System.Globalization.NumberStyles.HexNumber, null, out tempoffset))
+                throw new FormatException("Offset is not a properly formatted hex string");
 
-            if (this.Length < 1) throw new ArgumentException("Length cannot be less than 1");
+            if (!int.TryParse(Offset, System.Globalization.NumberStyles.HexNumber, null, out templength))
+                throw new FormatException("Length is not a properly formatted hex string");
+
+            if (templength < 1) throw new ArgumentException("Length cannot be less than 1");
+
+            this.StartOffset = tempoffset;
+            this.Length = templength;
         }
-
-        private bool IsValidHex(string HexString)
-        {
-            bool ishex;
-            foreach (char c in HexString)
-            {
-                ishex = (c >= '0' && c <= '9') ||
-                    (c >= 'a' && c <= 'f') ||
-                    (c >= 'A' && c <= 'F');
-                if (!ishex) return false;
-            }
-            return true;
-        }
-        
     }
 }

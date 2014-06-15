@@ -16,110 +16,104 @@ namespace dumplib.Text
             private set;
         }
 
-        public FileInfo File
-        {
-            get;
-            private set;
-        }
-
-        public string Title
+        /*public string Title
         {
             get
             {
                 return this.File.Name;
             }
-        }
+        }*/
 
-        public Table(string Filepath)
+        public Table(Stream Datastream)
         {
             int loaderrors = 0;
             var errors = new StringBuilder();
 
             this.LogicalTables = new Dictionary<string, LogicalTable>();
-            
+
             // add first logtable as the nameless 'main' table
             this.LogicalTables.Add("{main}", new LogicalTable("{main}"));
-            
+
             LogicalTable WorkTable = this.LogicalTables["{main}"];
-            this.File = new FileInfo(Filepath);
-            using (var fstream = new System.IO.StreamReader(Filepath))
+            var reader = new StreamReader(Datastream);
+
+            int line = 1;
+            string inBuffer;
+            byte[] identifier = null;
+
+            while (!reader.EndOfStream)
             {
-                int line = 1;
-                string inBuffer;
-                byte[] identifier = null;
+                inBuffer = reader.ReadLine();
 
-                while (!fstream.EndOfStream)
+                if (inBuffer == "" || inBuffer.Substring(0, 1) == "#")
                 {
-                    inBuffer = fstream.ReadLine();
+                    line++;
+                    continue;
+                }
 
-                    if (inBuffer == "" || inBuffer.Substring(0, 1) == "#")
+                try
+                {
+                    switch (inBuffer.Substring(0, 1))
                     {
-                        line++;
-                        continue;
-                    }
-
-                    try
-                    {
-                        switch (inBuffer.Substring(0, 1))
-                        {
-                            case "@":
-                                // table ID
-                                var newtable = inBuffer.Substring(1).Split(' ');
-                                string newname = newtable[0];
-                                if (this.LogicalTables.ContainsKey(newname)) throw new ArgumentException("A logical table with the name " + newname + " already exists in this table file");
-                                // if there is more than 1 element (i.e. there was a space followed by text)
-                                // check if that text is a directive
-                                // if not, ignore it
-                                if (newtable.Length > 1)
-                                {
-                                    // inherit directive to use the root table as a template when creating a new logical table
-                                    if (newtable[1].ToLower() == "inherit")
-                                        this.LogicalTables.Add(newname, new LogicalTable(newname, this.LogicalTables["{main}"]));
-                                } else
-                                    this.LogicalTables.Add(newname, new LogicalTable(newname));
-                                WorkTable = this.LogicalTables[newname];
-                                break;
-                            case "$":
-                                //control code
-                                identifier = inBuffer.Substring(1, (inBuffer.IndexOf('=') - 1)).HexStringToByteArray();
-                                WorkTable.AddEntry(identifier, ParseLine_ControlCode(inBuffer));
-                                break;
-                            case "/":
-                                // end token
-                                identifier = inBuffer.Substring(1, (inBuffer.IndexOf('=') - 1)).HexStringToByteArray();
-                                WorkTable.AddEntry(identifier, ParseLine_EndToken(inBuffer));
-                                break;
-                            case "!":
-                                // table switch
-                                identifier = inBuffer.Substring(1, (inBuffer.IndexOf('=') - 1)).HexStringToByteArray();
-                                WorkTable.AddEntry(identifier, ParseLine_TableSwitch(inBuffer));
-                                break;
-                            default:
-                                //standard dictionary entry
-                                identifier = inBuffer.Substring(0, (inBuffer.IndexOf('='))).HexStringToByteArray();
-                                WorkTable.AddEntry(identifier, ParseLine(inBuffer));
-                                break;
-                        }
-                        if (identifier != null && identifier.Length > WorkTable.ByteWidth) WorkTable.ByteWidth = identifier.Length;
-                    }
-                    catch (Exception ex)
-                    {
-                        loaderrors++;
-                        errors.Append("Line ").Append(line.ToString()).Append(": ").AppendLine(ex.Message);
-                        if (loaderrors >= 5)
-                        {
-                            errors.Append("At least 5 syntax errors detected, loading aborted");
+                        case "@":
+                            // table ID
+                            var newtable = inBuffer.Substring(1).Split(' ');
+                            string newname = newtable[0];
+                            if (this.LogicalTables.ContainsKey(newname)) throw new ArgumentException("A logical table with the name " + newname + " already exists in this table file");
+                            // if there is more than 1 element (i.e. there was a space followed by text)
+                            // check if that text is a directive
+                            // if not, ignore it
+                            if (newtable.Length > 1)
+                            {
+                                // inherit directive to use the root table as a template when creating a new logical table
+                                if (newtable[1].ToLower() == "inherit")
+                                    this.LogicalTables.Add(newname, new LogicalTable(newname, this.LogicalTables["{main}"]));
+                            }
+                            else
+                                this.LogicalTables.Add(newname, new LogicalTable(newname));
+                            WorkTable = this.LogicalTables[newname];
                             break;
-                        }
+                        case "$":
+                            //control code
+                            identifier = inBuffer.Substring(1, (inBuffer.IndexOf('=') - 1)).HexStringToByteArray();
+                            WorkTable.AddEntry(identifier, ParseLine_ControlCode(inBuffer));
+                            break;
+                        case "/":
+                            // end token
+                            identifier = inBuffer.Substring(1, (inBuffer.IndexOf('=') - 1)).HexStringToByteArray();
+                            WorkTable.AddEntry(identifier, ParseLine_EndToken(inBuffer));
+                            break;
+                        case "!":
+                            // table switch
+                            identifier = inBuffer.Substring(1, (inBuffer.IndexOf('=') - 1)).HexStringToByteArray();
+                            WorkTable.AddEntry(identifier, ParseLine_TableSwitch(inBuffer));
+                            break;
+                        default:
+                            //standard dictionary entry
+                            identifier = inBuffer.Substring(0, (inBuffer.IndexOf('='))).HexStringToByteArray();
+                            WorkTable.AddEntry(identifier, ParseLine(inBuffer));
+                            break;
                     }
-                    finally
+                    if (identifier != null && identifier.Length > WorkTable.ByteWidth) WorkTable.ByteWidth = identifier.Length;
+                }
+                catch (Exception ex)
+                {
+                    loaderrors++;
+                    errors.Append("Line ").Append(line.ToString()).Append(": ").AppendLine(ex.Message);
+                    if (loaderrors >= 5)
                     {
-                        line++;
+                        errors.Append("At least 5 syntax errors detected, loading aborted");
+                        break;
                     }
                 }
+                finally
+                {
+                    line++;
+                }
             }
+
             if (loaderrors > 0)
-                throw new FileParseException(errors.ToString(), Filepath);
+                throw new MapParseException(errors.ToString());
         }
 
         private bool ValidateStdEntry(string Input, bool NonNormalEntry = false)

@@ -5,7 +5,7 @@ using System.Text;
 //using System.Threading.Tasks;
 using dumplib.Layout;
 
-namespace dumplib.Search
+namespace dumplib
 {
     public static class Search
     {
@@ -19,11 +19,11 @@ namespace dumplib.Search
         {
             var MatchList = new List<Range>();
             // outler loop, length of the Data, increases by 1 each time unless a pattern was found
-            uint outerptr; // this will be our outer loop counter
+            long outerptr; // this will be our outer loop counter
             uint innerptr; // for the pattern loop; we want to keep the scope larger so we can track it after the loop
             byte baseline; // the baseline byte to use with the pattern
-            uint patlen = (uint)Pattern.Length;
-            uint finalbyte = (uint)Data.LongLength - patlen;
+            int patlen = Pattern.Length;
+            long finalbyte = Data.LongLength - patlen;
             for (outerptr = 0; outerptr < finalbyte; )
             {
                 // get a byte, this will be the baseline for this iteration
@@ -58,9 +58,9 @@ namespace dumplib.Search
         {
             var MatchList = new List<Range>();
 
-            uint outerptr;
-            uint seqlen = (uint)Sequence.Length;
-            uint finalbyte = (uint)(Data.LongLength) - seqlen;
+            long outerptr;
+            int seqlen = Sequence.Length;
+            long finalbyte = Data.LongLength - seqlen;
             
             for (outerptr = 0; outerptr < finalbyte; )
             {

@@ -4,6 +4,7 @@ using System.Text;
 using System.Linq;
 using System.Reflection;
 using System.ComponentModel;
+using System.IO;
 
 namespace dumplib
 {
@@ -37,44 +38,16 @@ namespace dumplib
         }
     }
 
-    public class FileParseException : Exception
+    public class MapParseException : Exception
     {
-        public int Line
-        {
-            get;
-            private set;
-        }
-
-        public string Filepath
-        {
-            get;
-            private set;
-        }
-
-        public FileParseException(string Message, string Filepath, int Line, Exception InnerException)
-            : base(Message, InnerException)
-        {
-            this.Line = Line;
-            this.Filepath = Filepath;
-        }
-
-        public FileParseException(string Message, string Filepath, int Line)
+        public MapParseException(string Message)
             : base(Message)
         {
-            this.Line = Line;
-            this.Filepath = Filepath;
         }
 
-        public FileParseException(string Message, string Filepath)
-            : base(Message)
-        {
-            this.Filepath = Filepath;
-        }
-
-        public FileParseException(string Message, string Filepath, Exception InnerException)
+        public MapParseException(string Message, Exception InnerException)
             : base(Message, InnerException)
         {
-            this.Filepath = Filepath;
         }
     }
 
@@ -136,4 +109,6 @@ namespace dumplib
             return _out;
         }
     }
+
+    
 }

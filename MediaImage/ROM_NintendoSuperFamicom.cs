@@ -1,8 +1,9 @@
 ﻿using System;
-using InOut = System.IO;
+using System.IO;
 using System.Text;
 using dumplib.Gfx;
 using dumplib.Layout;
+
 
 namespace dumplib.Image
 {
@@ -11,6 +12,34 @@ namespace dumplib.Image
     /// </summary>
     public class NintendoSuperFamicom_ROM : MediaImage
     {
+        private readonly static string HW_Worldwide = "Super Nintendo Entertainment System (SNES)";
+        private readonly static string HW_JP = "任天堂　スーパーファミコン";
+        private readonly static string HW_JP_R = "Nintendo Super Famicom";
+
+        public string HardwareName_Worldwide
+        {
+            get
+            {
+                return NintendoSuperFamicom_ROM.HW_Worldwide;
+            }
+        }
+
+        public string HardwareName_Japan
+        {
+            get
+            {
+                return NintendoSuperFamicom_ROM.HW_JP;
+            }
+        }
+
+        public string HardwareName_JapanRomaji
+        {
+            get
+            {
+                return NintendoSuperFamicom_ROM.HW_JP_R;
+            }
+        }
+
         /// <summary>
         /// The Super Famicom uses two addressing modes based on the size of each ROM bank: LoROM refers to bank size of 32k and HiROM to 64k
         /// </summary>
@@ -41,15 +70,6 @@ namespace dumplib.Image
             private set;
         }
 
-        /// <summary>
-        /// The format of the ROM dump
-        /// </summary>
-        public Dump.Formats ImageFormat
-        {
-            get;
-            private set;
-        }
-
         // --------------------------------------------------- constructor
 
         /// <summary>
@@ -60,17 +80,29 @@ namespace dumplib.Image
             : base(Filepath)
         {
             base.MediaType = MediaTypes.ROM;
-            ReadWholeFile();
-            Setup(Filepath);
+            base.HardwareName = NintendoSuperFamicom_ROM.HW_Worldwide;
+            //ReadWholeFile();
+            Setup();
         }
 
-        private void Setup(string Filepath)
+        public NintendoSuperFamicom_ROM(Stream Datastream)
+            : base(Datastream)
         {
-            base.GfxDefaultPixelFormat = TileFormats.SuperFamicom_4bpp;
+
+        }
+
+        public NintendoSuperFamicom_ROM(Stream Datastream, IDumpConverter Converter)
+            : base(Datastream, Converter)
+        {
+
+        }
+
+        private void Setup()
+        {
             SoftwareHeader = new byte[0x40];
 
-            this.ImageFormat = Dump.GetDumpType(this.Data);
-            if (this.ImageFormat != Dump.Formats.RAW) base.Data = Dump.Standardize(base.Data, this.ImageFormat);
+            //this.ImageFormat = Dump.GetDumpType(this.Data);
+            //if (this.ImageFormat != Dump.Formats.RAW) base.Data = Dump.Standardize(base.Data, this.ImageFormat);
 
             CheckLayout();
             SetupHeader();
@@ -81,17 +113,18 @@ namespace dumplib.Image
         // --------------------------------------------------- Methods
         private void SetupHeader()
         {
-            Buffer.BlockCopy(Data, (int)this.ROMBankSize - 0x40, this.SoftwareHeader, 0, 0x40);
+            //Buffer.BlockCopy(Data, (int)this.ROMBankSize - 0x40, this.SoftwareHeader, 0, 0x40);
+            this.SoftwareHeader = base.GetBytes((int)this.ROMBankSize - 0x40, 0x40);
             base.SoftwareTitle = ASCIIEncoding.ASCII.GetString(this.SoftwareHeader, 0, 21).Trim();
-            if (this.GetByte(0xd9) > 1 & this.GetByte(0xd9) < 0x0d) this.SoftwareRegionVideoType = CRTDisplayType.PAL;
-            else if (this.GetByte(0xd9) > 0x0d) this.SoftwareRegionVideoType = CRTDisplayType.Unknown;
-            else this.SoftwareRegionVideoType = CRTDisplayType.NTSC;
+            //if (this.GetByte(0xd9) > 1 & this.GetByte(0xd9) < 0x0d) this.SoftwareRegionVideoType = CRTDisplayType.PAL;
+            //else if (this.GetByte(0xd9) > 0x0d) this.SoftwareRegionVideoType = CRTDisplayType.Unknown;
+            //else this.SoftwareRegionVideoType = CRTDisplayType.NTSC;
         }
 
         private void CheckLayout()
         {
             // quick patch: if the file size is less than 64k, assume it is lo-rom
-            if (this.Data.Length < 0x10000)
+            if (base.Datastream.Length < 0x10000)
             {
                 this.ROMBankSize = ROMBankSizes.LoROM;
                 return;
@@ -99,8 +132,10 @@ namespace dumplib.Image
             // determines bank size of the ROM - 32k (LoROM) or 64k (HiROM)
             // copy 40 bytes from the two location candidates and test against these
             byte[] cand_lo = new byte[40], cand_hi = new byte[40];
-            Buffer.BlockCopy(Data, 0x7fc0, cand_lo, 0, 40);
-            Buffer.BlockCopy(Data, 0xffc0, cand_hi, 0, 40);
+            cand_lo = base.GetBytes(0x7fc0, 40);
+            cand_hi = base.GetBytes(0xffc0, 40);
+            //Buffer.BlockCopy(Data, 0x7fc0, cand_lo, 0, 40);
+            //Buffer.BlockCopy(Data, 0xffc0, cand_hi, 0, 40);
 
             // check the two locations for expected values for a Hi or Lo ROM and add points if they match
             int loScore = 0, hiScore = 0;
@@ -130,7 +165,7 @@ namespace dumplib.Image
         {
             var _out = new StringBuilder(base.Report());
             _out.AppendLine("Super Famicom Information:");
-            _out.AppendLine("Dump type: " + this.ImageFormat.GetEnumDesc());
+            //_out.AppendLine("Dump type: " + this.ImageFormat.GetEnumDesc());
             _out.AppendLine("Video type: " + this.SoftwareRegionVideoType.GetEnumDesc());
             return _out.ToString();
         }
@@ -138,8 +173,8 @@ namespace dumplib.Image
         public override Layout.ImageMap AutoMap()
         {
             var _out = base.AutoMap();
-            for (uint j = 0; j < this.File.Length / (uint)this.ROMBankSize; j++)
-                _out.Add(new Chunk(new Range((j * (uint)this.ROMBankSize), (uint)this.ROMBankSize), ("ROM Bank " + j.ToString() + " [" + this.ROMBankSize.ToString() + "]")));
+            for (uint j = 0; j < base.Datastream.Length / (uint)this.ROMBankSize; j++)
+                _out.Add(new DataChunkInfo(new Range((long)(j * (uint)this.ROMBankSize), (int)this.ROMBankSize), ("ROM Bank " + j.ToString() + " [" + this.ROMBankSize.ToString() + "]")));
             return _out;
         }
 

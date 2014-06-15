@@ -1,14 +1,15 @@
 ﻿using System; 
 //using System.Collections.Generic;
-using System.ComponentModel;
+//using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Imaging;
 //using System.Linq;
-using System.Text;
-using System.Windows.Forms;
+//using System.Text;
+//using System.Windows.Forms;
 
 namespace dumplib.Gfx
 {
+    /*
     public enum TileFormats : byte
     {
         Monochrome = 0,
@@ -23,12 +24,66 @@ namespace dumplib.Gfx
         VirtualBoy,
         NeoGeoPocket
     }
+    */
 
-    
+    public interface ITileConverter
+    {
+        /// <summary>
+        /// A description of the tile format, such as its name and what systems implemented it
+        /// </summary>
+        string Description
+        {
+            get;
+        }
+
+        string ID
+        {
+            get;
+        }
+
+        /// <summary>
+        /// The graphics bitdepth, which determines how many colors will be in the palette
+        /// </summary>
+        int Bitdepth
+        {
+            get;
+        }
+
+        /// <summary>
+        /// The width of tile in pixels
+        /// </summary>
+        int TileWidth
+        {
+            get;
+        }
+
+        /// <summary>
+        /// The height of the tile in pixels
+        /// </summary>
+        int TileHeight
+        {
+            get;
+        }
+
+        /// <summary>
+        /// The size of the tile data in bytes
+        /// </summary>
+        int ChunkSize
+        {
+            get;
+        }
+
+        /// <summary>
+        /// Method to convert the format
+        /// </summary>
+        /// <param name="TileData"></param>
+        /// <returns></returns>
+        byte[] GetTile(byte[] TileData);
+    }
 
     public static class TileGfx
     {
-        private delegate byte[] TileMode(byte[] _in);
+        //private delegate byte[] TileMode(byte[] _in);
 
         /// <summary>
         /// Gets a block of tiles as a bitmap
@@ -72,7 +127,7 @@ namespace dumplib.Gfx
         /// <param name="Palette">The color palette to use</param>
         /// <param name="TilesPerRow">The number of tiles to render per row</param>
         /// <returns>"Basic" mode - returns a bitmap with preserved bitdepth from the source; does not support extra formatting</returns>
-        public static Bitmap GetTiles(byte[] TileData, TileFormats TileFormat, ColorPalette Palette, int TilesPerRow)
+        /*public static Bitmap GetTiles(byte[] TileData, TileFormats TileFormat, ColorPalette Palette, int TilesPerRow)
         {
             if (TileData == null || Palette == null)
                 throw new ArgumentNullException();
@@ -147,7 +202,7 @@ namespace dumplib.Gfx
                 BitmapData finalimgData = finalimg.LockBits(new Rectangle(0, 0, finalimg.Width, finalimg.Height), ImageLockMode.ReadWrite, finalimg.PixelFormat);
                 IntPtr finalimgPtr = finalimgData.Scan0;
                 byte[] finalbytes = new byte[finalimgData.Height * finalimgData.Stride];
-                
+
                 for (int row = 0; row < finalbytes.Length; row++) finalbytes[row] = 0;
 
                 int tilerows = finalimg.Height / Format.TileSize;
@@ -162,7 +217,7 @@ namespace dumplib.Gfx
                     if (tiles.Length - tilecount < TilesPerRow) thisrownumcolumns = tiles.Length - tilecount;
                     for (int thisscanline = 0; thisscanline < Format.TileSize; thisscanline++)
                     {
-                        
+
                         for (int thiscolumn = 0; thiscolumn < thisrownumcolumns; thiscolumn++)
                         {
                             // check tilecount here for left over
@@ -181,286 +236,130 @@ namespace dumplib.Gfx
                 finalimg.UnlockBits(finalimgData);
                 return finalimg;
             }
-        }
+        }*/
 
-        public static byte[] From_VB(byte[] TileData)
+        public static Bitmap GetTiles(byte[] TileData, ITileConverter Converter, ColorPalette Palette, int TilesPerRow)
         {
-            if(TileData.Length != 16)
-                throw new ArgumentOutOfRangeException("Data chunk is incorrect size. 2bpp tiles must be exactly 16 bytes.");
+            //so when I first wrote this function i was A) significantly less experienced with C#/oop and
+            // B) I didn't comment it very well.
+            // so here I am tearing it down to make it work with interfaces instead of the wacky sprawling delegate/multiple class solution from before
+            // and I'm commenting it this time dammit!
+            if (TileData == null || Palette == null || Converter == null)
+                throw new ArgumentNullException();
 
-            var _out = new byte[64];
-            int outptr = 0;
+            // delegate version is now obsolete with the interface method
+            //TileMode GetTile = null;
 
-            for (int row = 0; row < 16; row += 2)
+            //GetTile = Converter.GetTile;
+
+            //chunk = the byte array of source data
+            byte[] chunk = new byte[Converter.ChunkSize];
+
+            //we'll need to see if the supplied data is evenly divided by the chunksize
+            // if it isn't, we'll pad it with 0's
+            int leftover = TileData.Length % Converter.ChunkSize;
+            if (leftover > 0)
             {
-                int j = outptr * 8;
-                byte byte1 = TileData[row];
-                byte byte2 = TileData[row +1];
-
-                _out[j] = (byte)(byte1 & 3);
-                _out[j + 1] = (byte)((byte1 >> 2) & 3);
-                _out[j + 2] = (byte)((byte1 >> 4) & 3);
-                _out[j + 3] = (byte)((byte1 >> 6) & 3);
-                _out[j + 4] = (byte)(byte2 & 3);
-                _out[j + 5] = (byte)((byte2 >> 2) & 3);
-                _out[j + 6] = (byte)((byte2 >> 4) & 3);
-                _out[j + 7] = (byte)((byte2 >> 6) & 3);
-                outptr++;
+                byte[] newtiledata = new byte[TileData.Length + (Converter.ChunkSize - leftover)];
+                Buffer.BlockCopy(TileData, 0, newtiledata, 0, TileData.Length);
+                for (int c = TileData.Length; c < (newtiledata.Length - 1); c++)
+                    newtiledata[c] = 0;
+                TileData = newtiledata;
             }
 
-            return _out;
-        }
+            //array of output tile data
+            // Data length / expected chunksize = total number of output tiles
+            // 2nd dimension will hold the byte array for each individual tile
+            byte[][] tiles = new byte[TileData.Length / Converter.ChunkSize][];
 
-        public static byte[] From_NGP(byte[] TileData)
-        {
-            if (TileData.Length != 16)
-                throw new ArgumentOutOfRangeException("Data chunk is incorrect size. 2bpp tiles must be exactly 16 bytes.");
-
-            var _out = new byte[64];
-            int outptr = 0;
-
-            for (int row = 0; row < 16; row += 2)
+            // copy each chunk of tile data from the source data,
+            // convert it, then put it into the tiles array
+            for (int u = 0; u < tiles.Length; u++)
             {
-                int j = outptr * 8;
-                byte byte1 = TileData[row];
-                byte byte2 = TileData[row + 1];
-
-                _out[j + 3] = (byte)(byte2 & 3);
-                _out[j + 2] = (byte)((byte2 >> 2) & 3);
-                _out[j + 1] = (byte)((byte2 >> 4) & 3);
-                _out[j] = (byte)((byte2 >> 6) & 3);
-                _out[j + 7] = (byte)(byte1 & 3);
-                _out[j + 6] = (byte)((byte1 >> 2) & 3);
-                _out[j + 5] = (byte)((byte1 >> 4) & 3);
-                _out[j + 4] = (byte)((byte1 >> 6) & 3);
-                outptr++;
+                Buffer.BlockCopy(TileData, u * Converter.ChunkSize, chunk, 0, Converter.ChunkSize);
+                //tiles[u] = GetTile(chunk);
+                tiles[u] = Converter.GetTile(chunk);
             }
 
-            return _out;
-        }
+            // ? why did I null this?
+            TileData = null;
+            // so it clears up memory faster I guess?
 
-        /// <summary>
-        /// Transcodes a 1 bit per pixel tile into standard bitmap data
-        /// </summary>
-        /// <param name="TileData">Array of bytes to decode. The array MUST contain exactly 8 bytes.</param>
-        /// <returns>Array of bytes in standard bitmap format</returns>
-        public static byte[] From_1bpp(byte[] TileData)
-        {
-            if (TileData.Length != 8)
-                throw new ArgumentOutOfRangeException("Data chunk is incorrect size. 1bpp tiles must be exactly 8 bytes.");
+            // determine the final width and height of the image, in pixels
+            // this will be the width of each tile * tiles per row
+            // therefore the output image will be the requested size even if there is not enough data to fill it
+            int final_width = Converter.TileWidth * TilesPerRow;
 
-            int count = 0;
-            byte bit = 0;
-            var _out = new byte[64];
+            // is the number of tiles less than/eq to Tiles Per Row? then the height is the height of one tile (TileHeight)
+            // more than/not eq to? height is number of rows (num tiles / Tiles Per Row) * height of a tile, + the height of one more row if there are extra tiles
+            int final_height = tiles.Length <= TilesPerRow ? Converter.TileHeight : (tiles.Length / TilesPerRow) * Converter.TileHeight + ((tiles.Length % TilesPerRow) != 0 ? Converter.TileHeight : 0);
 
-            for (int row = 0; row < 8; row++)
+
+            //generate a new indexed bitmap then set the palette, which will be manually filled with our converted data
+            var finalimg = new Bitmap(final_width, final_height, System.Drawing.Imaging.PixelFormat.Format8bppIndexed);
+            finalimg.Palette = Palette;
+
+            unsafe
             {
-                for (int shift = 8; shift > 0; shift--)
+                // create BitmapData object by locking the final output data in memory for our use only
+                BitmapData finalimgData = finalimg.LockBits(new Rectangle(0, 0, finalimg.Width, finalimg.Height), ImageLockMode.ReadWrite, finalimg.PixelFormat);
+                IntPtr finalimgPtr = finalimgData.Scan0;
+                
+                // holds the output, standard bitmap data
+                byte[] finalbytes = new byte[finalimgData.Height * finalimgData.Stride];
+                for (int row = 0; row < finalbytes.Length; row++) finalbytes[row] = 0;
+
+                // total number of rows
+                int tilerows = finalimg.Height / Converter.TileHeight;
+                
+                // TileSize here is probably TileHeight
+                //int tilerowbytesize = finalimgData.Stride * Format.TileSize;
+
+                // size of each row in bytes
+                // stride = size of a full scan line, in bytes
+                int row_bytesize = finalimgData.Stride * Converter.TileHeight;
+                int thisrow_byteoffset = 0;
+                int tilecount = 0;
+
+                if (TilesPerRow > tiles.Length) TilesPerRow = tiles.Length;
+                int thisrow_numcolumns = TilesPerRow;
+
+                // outer loop for counting rows
+                for (int thisrow_num = 0; thisrow_num < tilerows; thisrow_num++)
                 {
-                    bit = 0;
-                    if (((TileData[row] >> shift - 1) & 1) == 1) bit++;
-                    _out[count] = bit;
-                    count++;
+                    // loop for counting each scan line in the row
+                    for (int thisscanline = 0; thisscanline < Converter.TileHeight; thisscanline++)
+                    {
+                        // loop for counting the line from each tile
+                        for (int thiscolumn = 0; thiscolumn < thisrow_numcolumns; thiscolumn++)
+                        {
+                            // check tilecount here for left over
+                            // /\ --- leftover what?
+                            // ooooh probably leftover bytes, if a tile isn't 'complete'
+                            Buffer.BlockCopy(tiles[TilesPerRow * thisrow_num + thiscolumn],
+                                //thisscanline * Format.TileSize,
+                                thisscanline * Converter.TileHeight,
+                                finalbytes,
+                                thisrow_byteoffset + (thisscanline * finalimgData.Stride) + (thiscolumn * Converter.TileWidth),
+                                Converter.TileWidth);
+                        }
+
+                    }
+                    tilecount += thisrow_numcolumns;
+                    thisrow_byteoffset += row_bytesize;
+                    if (tiles.Length - tilecount < TilesPerRow) thisrow_numcolumns = tiles.Length - tilecount;
                 }
+
+                System.Runtime.InteropServices.Marshal.Copy(finalbytes, 0, finalimgPtr, finalbytes.Length);
+                finalimg.UnlockBits(finalimgData);
+                return finalimg;
             }
-            return _out;
         }
 
-        /// <summary>
-        /// Transcodes a Nintendo Gameboy tile into standard bitmap data
-        /// </summary>
-        /// <param name="TileData">Array of bytes to decode. The array MUST contain exactly 16 bytes.</param>
-        /// <returns>Array of bytes in standard bitmap format</returns>
-        public static byte[] From_NGB(byte[] TileData)
-        {
-            if (TileData.Length != 16)
-                throw new ArgumentOutOfRangeException("Data chunk is incorrect size. 2bpp tiles must be exactly 16 bytes.");
-
-            var _out = new byte[64];
-            int count = 0;
-
-            for (int row = 0; row < 16; row += 2)
-            {
-                for (int shift = 8; shift > 0; shift--)
-                {
-                    _out[count] = 0;
-                    if (((TileData[row] >> shift - 1) & 1) == 1) _out[count]++;
-                    if (((TileData[row + 1] >> shift - 1) & 1) == 1) _out[count] += 2;
-                    count++;
-                }
-            }
-            return _out;
-        }
-
-        public static byte[] From_SFC_3bpp(byte[] TileData)
-        {
-            if (TileData.Length != 24)
-                throw new ArgumentOutOfRangeException("Data chunk is incorrect size. 3bpp tiles must be exactly 24 bytes.");
-
-            var _out = new byte[96];
-            int count = 0;
-
-            for (int row = 0; row < 16; row += 2)
-            {
-                for (int shift = 8; shift > 0; shift--)
-                {
-                    _out[count] = 0;
-                    if (((TileData[row] >> shift - 1) & 1) == 1) _out[count]++;
-                    if (((TileData[row + 1] >> shift - 1) & 1) == 1) _out[count] += 2;
-                    if (((TileData[(row /2 ) + 16] >> shift - 1) & 1) == 1) _out[count] += 4;
-                    count++;
-                }
-            }
-            return _out;
-        }
-
-        /// <summary>
-        /// Transcodes a Nintendo Famicom tile into standard bitmap data
-        /// </summary>
-        /// <param name="TileData">Array of bytes to decode. The array MUST contain exactly 16 bytes.</param>
-        /// <returns>Array of bytes in standard bitmap format</returns>
-        public static byte[] From_NFC(byte[] TileData)
-        {
-            if (TileData.Length != 16)
-                throw new ArgumentOutOfRangeException("Data chunk is incorrect size. 2bpp tiles must be exactly 16 bytes.");
-
-            var _out = new byte[64];
-            int count = 0;
-
-            for (int row = 0; row < 8; row++)
-            {
-                for (int shift = 7; shift >= 0; shift--)
-                {
-                    _out[count] = 0;
-                    if (((TileData[row] >> shift) & 1) == 1) _out[count] += 1;
-                    if (((TileData[row + 8] >> shift) & 1) == 1) _out[count] += 2;
-                    count++;
-                }
-            }
-            return _out;
-        }
-
-        /// <summary>
-        /// Transcodes a 4-bit per pixel Nintendo Super Famicom tile into standard bitmap data
-        /// </summary>
-        /// <param name="TileData">Array of bytes to decode. The array MUST contain exactly 16 bytes.</param>
-        /// <returns>Array of bytes in standard bitmap format</returns>
-        public static byte[] From_SFC(byte[] TileData)
-        {
-            if (TileData.Length != 32)
-                throw new ArgumentOutOfRangeException("Data chunk is incorrect size. 4bpp tiles must be exactly 32 bytes.");
-
-            var _out = new byte[64];
-            int count = 0;
-
-            for (int row = 0; row < 16; row += 2)
-            {
-                for (int shift = 7; shift >= 0; shift--)
-                {
-                    _out[count] = 0;
-                    if (((TileData[row] >> shift) & 1) == 1) _out[count] += 1;
-                    if (((TileData[row + 1] >> shift) & 1) == 1) _out[count] += 2;
-                    if (((TileData[row + 16] >> shift) & 1) == 1) _out[count] += 4;
-                    if (((TileData[row + 17] >> shift) & 1) == 1) _out[count] += 8;
-                    count++;
-                }
-            }
-            return _out;
-        }
-
-        public static byte[] From_SFC_8bpp(byte[] TileData)
-        {
-            if (TileData.Length != 64)
-                throw new ArgumentOutOfRangeException("Data chunk is incorrect size. 8bpp tiles must be exactly 64 bytes.");
-
-            var _out = new byte[64];
-            int count = 0;
-
-            for (int row = 0; row < 16; row += 2)
-            {
-                for (int shift = 7; shift >= 0; shift--)
-                {
-                    _out[count] = 0;
-                    if (((TileData[row] >> shift) & 1) == 1) _out[count] += 1;
-                    if (((TileData[row + 1] >> shift) & 1) == 1) _out[count] += 2;
-                    if (((TileData[row + 16] >> shift) & 1) == 1) _out[count] += 4;
-                    if (((TileData[row + 17] >> shift) & 1) == 1) _out[count] += 8;
-                    if (((TileData[row + 32] >> shift) & 1) == 1) _out[count] += 16;
-                    if (((TileData[row + 33] >> shift) & 1) == 1) _out[count] += 32;
-                    if (((TileData[row + 48] >> shift) & 1) == 1) _out[count] += 64;
-                    if (((TileData[row + 49] >> shift) & 1) == 1) _out[count] += 128;
-                    count++;
-                }
-            }
-            return _out;
-        }
-
-        /// <summary>
-        /// Transcodes a Nintendo Super Famicom Mode 7 tile into standard bitmap data
-        /// </summary>
-        /// <param name="TileData">Array of bytes to decode. The array MUST contain exactly 16 bytes.</param>
-        /// <returns>Array of bytes in standard bitmap format</returns>
-        public static byte[] From_SFC_Mode7(byte[] TileData)
-        {
-            if (TileData.Length != 64)
-                throw new ArgumentOutOfRangeException("Data chunk is incorrect size. Mode 7 tiles must be exactly 64 bytes.");
-            byte[] _out = new byte[TileData.Length];
-            Array.Copy(TileData,_out,TileData.Length);
-            return _out;
-        }
-
-        /// <summary>
-        /// Transcodes a Sega GameGear/Master System tile into standard bitmap data
-        /// </summary>
-        /// <param name="TileData">Array of bytes to decode. The array MUST contain exactly 16 bytes.</param>
-        /// <returns>Array of bytes in standard bitmap format</returns>
-        public static byte[] From_SGG(byte[] TileData)
-        {
-            if (TileData.Length != 32)
-                throw new ArgumentOutOfRangeException("Data chunk is incorrect size. 4bpp tiles must be exactly 32 bytes.");
-            var _out = new byte[64];
-            int count = 0;
-
-            for (int row = 0; row < 32; row += 4)
-            {
-                for (int shift = 7; shift >= 0; shift--)
-                {
-                    _out[count] = 0;
-                    if (((TileData[row] >> shift) & 1) == 1) _out[count] += 1;
-                    if (((TileData[row + 1] >> shift) & 1) == 1) _out[count] += 2;
-                    if (((TileData[row + 2] >> shift) & 1) == 1) _out[count] += 4;
-                    if (((TileData[row + 3] >> shift) & 1) == 1) _out[count] += 8;
-                    count++;
-                }
-            }
-            return _out;
-        }
-
-        /// <summary>
-        /// Transcodes a Sega Megadrive tile into standard bitmap data
-        /// </summary>
-        /// <param name="TileData">Array of bytes to decode. The array MUST contain exactly 16 bytes.</param>
-        /// <returns>Array of bytes in standard bitmap format</returns>
-        public static byte[] From_SMD(byte[] TileData)
-        {
-            if (TileData.Length != 32)
-                throw new ArgumentOutOfRangeException("Data chunk is incorrect size. 4bpp tiles must be exactly 32 bytes.");
-
-            int count = 0;
-            var _out = new byte[64];
-
-            for (int t = 0; t < 32; t++)
-            {
-                _out[count] = (byte)((TileData[t] & 0xf0) >> 4);
-                _out[count + 1] = (byte)(TileData[t] & 0xf);
-                count += 2;
-            }
-            return _out;
-        }
 
     }
 
-
+    /*
     public class TileRenderSettings
     {
         public TileRenderSettings(TileFormats Format, ColorPalette Palette)
@@ -547,7 +446,9 @@ namespace dumplib.Gfx
             private set;
         }
     }
+    */
 
+    /*
     public class TileFormatInfo
     {
         public TileFormatInfo(TileFormats Format)
@@ -563,6 +464,11 @@ namespace dumplib.Gfx
                     this.TileSize = 8;
                     this.BitDepth = 2;
                     this.Description = "Used by Nintendo Gameboy and Super Famicom";
+                    break;
+                case TileFormats.VirtualBoy:
+                    this.TileSize = 8;
+                    this.BitDepth = 2;
+                    this.Description = "Used by the Nintendo VirtualBoy";
                     break;
                 case TileFormats.Megadrive:
                     this.TileSize = 8;
@@ -647,5 +553,5 @@ namespace dumplib.Gfx
             get;
             private set;
         }
-    }
+    }*/
 }

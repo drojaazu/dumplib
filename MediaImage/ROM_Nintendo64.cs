@@ -8,14 +8,42 @@ namespace dumplib.Image
     /// </summary>
     public class Nintendo64_ROM : MediaImage
     {
+        private readonly static string HW_Worldwide = "Nintendo 64";
+        private readonly static string HW_JP = "ニンテンドー64";
+
+        public string HardwareName_Worldwide
+        {
+            get
+            {
+                return Nintendo64_ROM.HW_Worldwide;
+            }
+        }
+
+        public string HardwareName_Japan
+        {
+            get
+            {
+                return Nintendo64_ROM.HW_JP;
+            }
+        }
+
+        public string HardwareName_JapanRomaji
+        {
+            get
+            {
+                return Nintendo64_ROM.HW_Worldwide;
+            }
+        }
+
         public Nintendo64_ROM(string _file)
             : base(_file)
         {
             base.MediaType = MediaTypes.ROM;
-            base.ReadWholeFile();
-            this.DumpType = Dump.GetDumpFormat(this.Data);
+            base.HardwareName = Nintendo64_ROM.HW_Worldwide;
+            //base.ReadWholeFile();
+            //this.DumpType = Dump.GetDumpFormat(this.Data);
             // dumplib uses the Z64 format as 'baseline' as it is PC readable (little endian)
-            switch (this.DumpType)
+            /*switch (this.DumpType)
             {
                 case Dump.Formats.N64:
                     this.Data = Dump.Standardize(this.Data, this.DumpType);
@@ -23,8 +51,8 @@ namespace dumplib.Image
                 case Dump.Formats.V64:
                     this.Data = Dump.Standardize(this.Data, this.DumpType);
                     break;
-            }
-            base.SoftwareTitle = Text.GetText.UsingASCII(GetBytes(0x20, 20)).Trim();
+            }*/
+            base.SoftwareTitle = Text.Transcode.UsingASCII(GetBytes(0x20, 20)).Trim();
         }
 
         public Dump.Formats DumpType

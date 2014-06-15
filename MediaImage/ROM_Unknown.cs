@@ -8,7 +8,8 @@ namespace dumplib.Image
             : base(_file)
         {
             base.MediaType = MediaTypes.ROM;
-            base.ReadWholeFile();
+            base.HardwareName = "Unknown";
+            //base.ReadWholeFile();
             base.SoftwareTitle = "Unknown ROM";
         }
     }

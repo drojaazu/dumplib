@@ -9,13 +9,50 @@ namespace dumplib.Image
     /// </summary>
     public class SegaMegadrive_ROM : MediaImage
     {
+        private readonly static string HW_Worldwide = "Sega Mega Drive";
+        private readonly static string HW_NA = "Sega Genesis";
+        private readonly static string HW_JP = "セガ　メガドライブ";
+
+        public string HardwareName_Worldwide
+        {
+            get
+            {
+                return SegaMegadrive_ROM.HW_Worldwide;
+            }
+        }
+
+        public string HardwareName_NorthAmerica
+        {
+            get
+            {
+                return SegaMegadrive_ROM.HW_NA;
+            }
+        }
+
+        public string HardwareName_Japan
+        {
+            get
+            {
+                return SegaMegadrive_ROM.HW_JP;
+            }
+        }
+
+        public string HardwareName_JapanRomaji
+        {
+            get
+            {
+                return SegaMegadrive_ROM.HW_Worldwide;
+            }
+        }
+
         /// <summary>
-        /// Creates a new Sega Megadrive ROMimage from the specified file
+        /// Creates a new Sega Megadrive ROM image from the specified file
         /// </summary>
         /// <param name="Filepath"></param>
         public SegaMegadrive_ROM(string Filepath)
             : base(Filepath)
         {
+            base.HardwareName = SegaMegadrive_ROM.HW_Worldwide;
             base.MediaType = MediaTypes.ROM;
             Setup(Filepath);
         }
@@ -46,20 +83,20 @@ namespace dumplib.Image
 
         private void Setup(string Filepath)
         {
-            base.ReadWholeFile();
-            this.DumpFormat = Dump.GetDumpFormat(base.Data);
-            switch (this.DumpFormat)
+            //base.ReadWholeFile();
+            //this.DumpFormat = Dump.GetDumpFormat(base.Data);
+            /*switch (this.DumpFormat)
             {
                 case Dump.Formats.SMD:
                     base.Data = Dump.Standardize(base.Data, this.DumpFormat);
                     this.AddComment("Converted from interleaved Super MagicDrive format");
                     break;
-            }
+            }*/
 
-            this.SoftwareTitle_International = Text.GetText.UsingASCII(GetBytes(0x150, 48)).Trim();
-            this.SoftwareTitle_Domestic = Text.GetText.UsingSJIS(GetBytes(0x120, 48)).Trim();
+            this.SoftwareTitle_International = Text.Transcode.UsingASCII(GetBytes(0x150, 48)).Trim();
+            this.SoftwareTitle_Domestic = Text.Transcode.UsingSJIS(GetBytes(0x120, 48)).Trim();
             base.SoftwareTitle = this.SoftwareTitle_International == string.Empty ? this.SoftwareTitle_Domestic : this.SoftwareTitle_International;
-            this.SoftwareDeveloper = Text.GetText.UsingASCII(GetBytes(0x113, 5));
+            this.SoftwareDeveloper = Text.Transcode.UsingASCII(GetBytes(0x113, 5));
         }
 
         static public class Dump

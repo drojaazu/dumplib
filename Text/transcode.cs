@@ -9,7 +9,7 @@ namespace dumplib.Text
     /// <summary>
     /// Contains algorithm to convert text encoding (Unique game encoding -> Unicode)
     /// </summary>
-    public static class GetText
+    public static class Transcode
     {
         private class MatchFrame
         {

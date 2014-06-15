@@ -14,6 +14,33 @@ namespace dumplib.Image
             International = 7
         }
 
+        private static readonly string HW_Worldwide = "Sega Game Gear";
+        private static readonly string HW_Japan = "セガゲームギア";
+
+        public string HardwareName_Worldwide
+        {
+            get
+            {
+                return SegaGameGear_ROM.HW_Worldwide;
+            }
+        }
+
+        public string HardwareName_Japan
+        {
+            get
+            {
+                return SegaGameGear_ROM.HW_Japan;
+            }
+        }
+
+        public string HardwareName_JapanRomaji
+        {
+            get
+            {
+                return SegaGameGear_ROM.HW_Worldwide;
+            }
+        }
+
         public SoftwareRegions SoftwareRegion
         {
             get;
@@ -30,8 +57,9 @@ namespace dumplib.Image
             : base(Filepath)
         {
             base.MediaType = MediaTypes.ROM;
-            base.ReadWholeFile();
+            //base.ReadWholeFile();
             //base.System = Systems.SGG;
+            base.HardwareName = SegaGameGear_ROM.HW_Worldwide;
             base.SoftwareTitle = "[Sega GameGear software]";
             SetupHeader();
         }
@@ -39,9 +67,10 @@ namespace dumplib.Image
         protected void SetupHeader()
         {
             // the Product Code is 2 bytes and one nibble (upper); the first two are bianry coded decimal,
-            this.SoftwareCode = int.Parse((GetByte(0x7ffe) >> 4).ToString() + (GetByte(0x7ffd).ToString("X") + GetByte(0x7ffc).ToString("X")));
+            //this.SoftwareCode = int.Parse((base.Datastream.ReadByte(0x7ffe) >> 4).ToString() + (GetByte(0x7ffd).ToString("X") + GetByte(0x7ffc).ToString("X")));
             // set the region
-            switch (GetByte(0x7fff) >> 4)
+            base.Datastream.Seek(0x7fff, System.IO.SeekOrigin.Begin);
+            switch (base.Datastream.ReadByte() >> 4)
             {
                 case 5:
                     this.SoftwareRegion = SoftwareRegions.Japan;
@@ -62,9 +91,9 @@ namespace dumplib.Image
         public override Layout.ImageMap AutoMap()
         {
             var _out = base.AutoMap();
-            uint banks = this.DataSize / 16384;
-            for (uint j = 0; j < banks; j++)
-                _out.Add(new Chunk(new Range(j * 16384, 16384), ("ROM Bank " + j.ToString())));
+            int banks = (int)(base.Datastream.Length / 16384);
+            for (int j = 0; j < banks; j++)
+                _out.Add(new DataChunkInfo(new Range(j * 16384, 16384), ("ROM Bank " + j.ToString())));
             return _out;
         }
     }
