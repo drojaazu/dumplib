@@ -45,16 +45,17 @@ namespace dumplib.Image
             }
         }
 
-        /// <summary>
-        /// Creates a new Sega Megadrive ROM image from the specified file
-        /// </summary>
-        /// <param name="Filepath"></param>
-        public SegaMegadrive_ROM(string Filepath)
-            : base(Filepath)
+        public SegaMegadrive_ROM(Stream Datastream, IDumpConverter Converter = null)
+            : base(Datastream, Converter)
+        {
+            this.Init();
+        }
+
+        private void Init()
         {
             base.HardwareName = SegaMegadrive_ROM.HW_Worldwide;
             base.MediaType = MediaTypes.ROM;
-            Setup(Filepath);
+            Setup();
         }
 
         public string SoftwareTitle_Domestic
@@ -81,7 +82,7 @@ namespace dumplib.Image
             private set;
         }
 
-        private void Setup(string Filepath)
+        private void Setup()
         {
             //base.ReadWholeFile();
             //this.DumpFormat = Dump.GetDumpFormat(base.Data);

@@ -7,8 +7,21 @@ using System.ComponentModel;
 
 namespace dumplib.Layout
 {
+    public enum DumpTypes
+    {
+        Raw = 0,
+        Text,
+        Gfx,
+        Audio
+    }
+
     public interface IChunkInfo
     {
+        DumpTypes DumpType
+        {
+            get;
+        }
+
         string Description
         {
             get;
@@ -49,13 +62,21 @@ namespace dumplib.Layout
     /// <summary>
     /// Describes a generic chunk of data
     /// </summary>
-    public class DataChunkInfo : IChunkInfo
+    public class ChunkInfo : IChunkInfo
     {
-        public DataChunkInfo(Range Addr = null, string Description = null)
+        public ChunkInfo(Range Addr = null, string Description = null)
         {
             if(string.IsNullOrEmpty(Description)) Description = "Data chunk";
             this.Description = Description;
             this.Addr = Addr;
+        }
+
+        public DumpTypes DumpType
+        {
+            get
+            {
+                return Layout.DumpTypes.Raw;
+            }
         }
 
         public string Description
@@ -86,6 +107,14 @@ namespace dumplib.Layout
             if (string.IsNullOrEmpty(Description)) Description = "File on disk";
             this.Description = Description;
             this.Addr = Addr;
+        }
+
+        public DumpTypes DumpType
+        {
+            get
+            {
+                return Layout.DumpTypes.Raw;
+            }
         }
 
         public string Description
@@ -163,6 +192,14 @@ namespace dumplib.Layout
              * */
         }
 
+        public DumpTypes DumpType
+        {
+            get
+            {
+                return Layout.DumpTypes.Gfx;
+            }
+        }
+
         public string Description
         {
             get;
@@ -214,6 +251,11 @@ namespace dumplib.Layout
                     {
                         case "format":
                             this.TileConverter = argsplit[1];
+                            break;
+                        case "perrow":
+                            int perrow;
+                            int.TryParse(argsplit[1], out perrow);
+                            this.TilesPerRow = perrow;
                             break;
                         default:
                             break;
@@ -280,6 +322,14 @@ namespace dumplib.Layout
             this.TableID = null;
         }
 
+        public DumpTypes DumpType
+        {
+            get
+            {
+                return Layout.DumpTypes.Text;
+            }
+        }
+
         public Range Addr
         {
             get;
@@ -312,7 +362,37 @@ namespace dumplib.Layout
 
         public void ParseArgs(string[] Options)
         {
-
+            if (Options != null && Options.Length > 0)
+            {
+                string[] argsplit;
+                for (int argloop = 0; argloop < Options.Length; argloop++)
+                {
+                    argsplit = Options[argloop].Split('=');
+                    switch (argsplit[0].ToLower())
+                    {
+                        case "enc":
+                            switch (argsplit[1].ToLower())
+                            {
+                                case "sjis":
+                                    this.Encoding = Encoding.GetEncoding(932);
+                                    break;
+                                case "ascii":
+                                    this.Encoding = ASCIIEncoding.ASCII;
+                                    break;
+                                default:
+                                    int codepage;
+                                    if (!int.TryParse(argsplit[1], out codepage))
+                                        if (!int.TryParse(argsplit[1], System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out codepage))
+                                            throw new ArgumentException("Text -> Encoding -> Value is not a number: " + argsplit[1]);
+                                    this.Encoding = Encoding.GetEncoding(codepage);
+                                    break;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
         }
     }
 
@@ -343,6 +423,14 @@ namespace dumplib.Layout
             this.Addr = Addr;
             if (string.IsNullOrEmpty(Description)) Description = "Code chunk";
             this.Description = Description;
+        }
+
+        public DumpTypes DumpType
+        {
+            get
+            {
+                return Layout.DumpTypes.Raw;
+            }
         }
 
         public string Description
@@ -378,6 +466,14 @@ namespace dumplib.Layout
         {
             get;
             private set;
+        }
+
+        public DumpTypes DumpType
+        {
+            get
+            {
+                return Layout.DumpTypes.Raw;
+            }
         }
 
         public Range Addr

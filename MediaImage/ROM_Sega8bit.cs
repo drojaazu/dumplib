@@ -1,5 +1,6 @@
 ﻿using System;
 using dumplib.Layout;
+using System.IO;
 
 namespace dumplib.Image
 {
@@ -15,7 +16,7 @@ namespace dumplib.Image
         }
 
         private static readonly string HW_Worldwide = "Sega Game Gear";
-        private static readonly string HW_Japan = "セガゲームギア";
+        private static readonly string HW_Japan = "セガ　ゲームギア";
 
         public string HardwareName_Worldwide
         {
@@ -53,12 +54,15 @@ namespace dumplib.Image
             private set;
         }
 
-        public SegaGameGear_ROM(string Filepath)
-            : base(Filepath)
+        public SegaGameGear_ROM(Stream Datastream, IDumpConverter Converter = null)
+            : base(Datastream, Converter)
+        {
+            this.Init();
+        }
+
+        private void Init()
         {
             base.MediaType = MediaTypes.ROM;
-            //base.ReadWholeFile();
-            //base.System = Systems.SGG;
             base.HardwareName = SegaGameGear_ROM.HW_Worldwide;
             base.SoftwareTitle = "[Sega GameGear software]";
             SetupHeader();
@@ -83,7 +87,8 @@ namespace dumplib.Image
                     break;
                 default:
                     this.SoftwareRegion = SoftwareRegions.Unknown;
-                    this.AddComment("Warning: Invalid region in software header");
+                    
+                    //log("Warning: Invalid region in software header");
                     break;
             }
         }
@@ -93,7 +98,7 @@ namespace dumplib.Image
             var _out = base.AutoMap();
             int banks = (int)(base.Datastream.Length / 16384);
             for (int j = 0; j < banks; j++)
-                _out.Add(new DataChunkInfo(new Range(j * 16384, 16384), ("ROM Bank " + j.ToString())));
+                _out.Add(new ChunkInfo(new Range(j * 16384, 16384), ("ROM Bank " + j.ToString())));
             return _out;
         }
     }

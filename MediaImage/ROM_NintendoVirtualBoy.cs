@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 
 namespace dumplib.Image
 {
     public class NintendoVirtualBoy_ROM : MediaImage
     {
         private readonly static string HW_Worldwide = "Nintendo Virtual Boy";
-        private readonly static string HW_JP = "任天堂　バーチャルボーイ";
+        private readonly static string HW_JP = "ニンテンドー　バーチャルボーイ";
 
         public string HardwareName_Worldwide
         {
@@ -35,12 +34,16 @@ namespace dumplib.Image
             }
         }
 
-        public NintendoVirtualBoy_ROM(string Filepath)
-            : base(Filepath)
+        public NintendoVirtualBoy_ROM(Stream Datastream, IDumpConverter Converter = null)
+            : base(Datastream, Converter)
+        {
+            this.Init();
+        }
+
+        private void Init()
         {
             base.MediaType = MediaTypes.ROM;
             base.HardwareName = NintendoVirtualBoy_ROM.HW_Worldwide;
-            //base.ReadWholeFile();
             base.SoftwareTitle = GetText_SJIS(base.Datastream.Length - 544, 20);
         }
     }

@@ -116,7 +116,7 @@ namespace dumplib.Text
 
             public EndToken(string Label, string Formatting = null)
             {
-                if (Label == null) throw new ArgumentException("Label cannot be null");
+                if (Label == null) throw new ArgumentNullException();
                 this.Label = Label;
                 if (Formatting == null) this.Formatting = string.Empty;
                 else this.Formatting = Formatting;
@@ -139,8 +139,8 @@ namespace dumplib.Text
 
             public TableSwitch(string TableID, int Matches)
             {
-                if (TableID == null) throw new ArgumentException("TableID cannot be null");
-                if (Matches < -1) throw new ArgumentException("Invalid matches value");
+                if (TableID == null) throw new ArgumentNullException();
+                if (Matches < -1) throw new ArgumentOutOfRangeException("Matches value is invalid");
 
                 this.Matches = Matches;
                 this.TableID = TableID;
@@ -199,7 +199,7 @@ namespace dumplib.Text
 
                 public Parameter(NumberType Type, string Label)
                 {
-                    if (Label == null) throw new ArgumentException("Label cannot be null");
+                    if (Label == null) throw new ArgumentNullException();
                     this.Type = Type;
                     this.Label = Label;
                 }

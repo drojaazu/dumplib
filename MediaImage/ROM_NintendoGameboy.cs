@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace dumplib.Image
 {
@@ -7,7 +8,7 @@ namespace dumplib.Image
     public class NintendoGameboy_ROM : MediaImage
     {
         private readonly static string HW_Worldwide = "Nintendo Game Boy";
-        private readonly static string HW_JP = "任天堂　ゲームボーイ";
+        private readonly static string HW_JP = "ニンテンドー　ゲームボーイ";
 
         public string HardwareName_Worldwide
         {
@@ -51,13 +52,16 @@ namespace dumplib.Image
             private set;
         }
 
-        public NintendoGameboy_ROM(string Filepath)
-            : base(Filepath)
+        public NintendoGameboy_ROM(Stream Datastream, IDumpConverter Converter = null)
+            : base(Datastream, Converter)
+        {
+            this.Init();
+        }
+
+        private void Init()
         {
             base.MediaType = MediaTypes.ROM;
             base.HardwareName = NintendoGameboy_ROM.HW_Worldwide;
-            //base.ReadWholeFile();
-            //base.System = Systems.NGB;
             SetupHeader();
         }
 

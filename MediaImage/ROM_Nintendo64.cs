@@ -35,33 +35,26 @@ namespace dumplib.Image
             }
         }
 
-        public Nintendo64_ROM(string _file)
-            : base(_file)
+        public Nintendo64_ROM(Stream Datastream, IDumpConverter Converter = null)
+            : base(Datastream, Converter)
+        {
+            this.Init();
+        }
+
+        private void Init()
         {
             base.MediaType = MediaTypes.ROM;
             base.HardwareName = Nintendo64_ROM.HW_Worldwide;
-            //base.ReadWholeFile();
-            //this.DumpType = Dump.GetDumpFormat(this.Data);
-            // dumplib uses the Z64 format as 'baseline' as it is PC readable (little endian)
-            /*switch (this.DumpType)
-            {
-                case Dump.Formats.N64:
-                    this.Data = Dump.Standardize(this.Data, this.DumpType);
-                    break;
-                case Dump.Formats.V64:
-                    this.Data = Dump.Standardize(this.Data, this.DumpType);
-                    break;
-            }*/
             base.SoftwareTitle = Text.Transcode.UsingASCII(GetBytes(0x20, 20)).Trim();
         }
-
+        /*
         public Dump.Formats DumpType
         {
             get;
             private set;
         }
 
-
+        
         public static class Dump
         {
             public enum Formats
@@ -127,6 +120,6 @@ namespace dumplib.Image
                         return Image;
                 }
             }
-        }
+        }*/
     }
 }

@@ -6,9 +6,6 @@ using System.ComponentModel;
 
 namespace dumplib.Text
 {
-    /// <summary>
-    /// Contains algorithm to convert text encoding (Unique game encoding -> Unicode)
-    /// </summary>
     public static class Transcode
     {
         private class MatchFrame
@@ -260,7 +257,7 @@ namespace dumplib.Text
         public static string UsingASCII(byte[] Data)
         {
             //return UsingCodePage(Data, 20127);
-            return UsingEncoding(Data, 437);
+            return UsingEncoding(Data, Encoding.ASCII);
         }
 
         public static string UsingSJIS(byte[] Data)
@@ -281,18 +278,77 @@ namespace dumplib.Text
         /// <returns></returns>
         public static string UsingEncoding(byte[] Data, Encoding Encoding)
         {
-            if (Data == null) return string.Empty;
+            if (Data == null) throw new ArgumentNullException();
+
+            // Can't use this method because it chokes when it hits a 0!
+            //return Encoding.GetString(Data, 0, Data.Length);
+            
             StringBuilder _out = new StringBuilder();
+            int offset = 0;
+            int length = 0;
+            byte[] tempdata;
+
             byte _work;
 
-            for (int a = 0; a < Data.Length; a++)
+            //NEW VERSION 2
+            // cycle through the array, find all 0's change them to 0x20 (space)
+            // kinda meh but w/e
+            for (int fixloop = 0; fixloop < Data.Length; fixloop++)
             {
-                _work = Data[a];
-                if (_work == 0) _out.Append("[NUL]");
-                else _out.Append(Encoding.GetString(Data, a, 1));
+                if (Data[fixloop] == 0) Data[fixloop] = 0x20;
             }
 
-            return _out.ToString();
+            return Encoding.GetString(Data, 0, Data.Length);
+
+            //for (int workloop = 0; workloop < Data.Length; workloop++)
+            //{
+                
+                
+
+                // NEW VERSION 1
+                // cycle through each byte until a 0 is encountered
+                // submit that section of bytes to the encoder
+                // turn the 0 into a space and move on
+                /*_work = Data[workloop];
+                //if (_work == 0) _out.Append("[NUL]");
+                if (_work == 0)
+                {
+                    if (length > 0)
+                    {
+                        tempdata = new byte[length];
+                        Buffer.BlockCopy(Data, offset, tempdata, 0, length);
+                        var t = Encoding.GetString(tempdata, 0, length);
+                        _out.Append(t);
+                    }
+                    _out.Append(' ');
+                    offset = workloop + 1;
+                    length = 0;
+                }
+                else
+                {
+                    //_out.Append(Encoding.GetString(Data, workloop, 1));
+                    length++;
+                }*/
+
+                // OLD KLUDGY VERSION
+                /*
+                _work = Data[workloop];
+                if (_work == 0) _out.Append(" ");
+                else
+                {
+                  _out.Append(Encoding.GetString(Data, workloop, 1));
+                }*/
+            //}
+            // part of new version 1:
+            /*if (length > 0)
+            {
+                tempdata = new byte[length];
+                Buffer.BlockCopy(Data, offset, tempdata, 0, length);
+                _out.Append(Encoding.GetString(tempdata, 0, length));
+            }*/
+            
+            //return _out.ToString();
+            
         }
     }
 }

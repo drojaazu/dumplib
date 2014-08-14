@@ -13,7 +13,7 @@ namespace dumplib.Layout
     {
         public static Dictionary<string, Type> ChunkTypes = new Dictionary<string, Type>()
         {
-            {"D",typeof(DataChunkInfo)},    
+            {"D",typeof(ChunkInfo)},    
             {"T",typeof(TextChunkInfo)},
             {"G",typeof(GfxChunkInfo)},
             {"C",typeof(CompressedChunkInfo)},
@@ -68,7 +68,7 @@ namespace dumplib.Layout
 
             if (string.IsNullOrEmpty(Description))
             {
-                if (Datastream is FileStream) Description = (Datastream as FileStream).Name;
+                if (Datastream is FileStream) Description = Path.GetFileName((Datastream as FileStream).Name);
                 else Description = "Map from data stream";
             }
             this.Description = Description;

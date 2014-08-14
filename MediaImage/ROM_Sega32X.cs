@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace dumplib.Image
 {
@@ -11,10 +12,14 @@ namespace dumplib.Image
         private readonly static string HW_Japan = "セガ　スーパー32X";
         private readonly static string HW_JapanRomaji = "Sega Super 32X";
 
-        public SegaSuper32X_ROM(string Filepath)
-            : base(Filepath)
+        public SegaSuper32X_ROM(Stream Datastream, IDumpConverter Converter = null)
+            : base(Datastream, Converter)
         {
-            //base.System = Systems.S32X;
+            this.Init();
+        }
+
+        private void Init()
+        {
             base.HardwareName = SegaSuper32X_ROM.HW_Worldwide;
         }
 

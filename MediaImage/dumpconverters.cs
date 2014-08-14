@@ -35,6 +35,63 @@ namespace dumplib.Image
             return new MemoryStream(data);
         }
     }
+
+    public class NintendoFDS_FAM : IDumpConverter
+    {
+        public string Description
+        {
+            get
+            {
+                return "Pasofami format - 0xF180 byte header";
+            }
+        }
+
+        public MemoryStream Normalize(Stream Datastream)
+        {
+            Datastream.Seek(0, SeekOrigin.Begin);
+            this.Sides = Datastream.ReadByte();
+            if (Datastream.Length < 0xf180) throw new ArgumentException("Stream size is too small to convert");
+            byte[] data = new byte[(Datastream.Length - 16)];
+            Datastream.Seek(0xf180, SeekOrigin.Begin);
+            Datastream.Read(data, 0, data.Length);
+            return new MemoryStream(data);
+        }
+
+        public int Sides
+        {
+            get;
+            private set;
+        }
+    }
+
+    public class NintendoFDS_FDS : IDumpConverter
+    {
+        public string Description
+        {
+            get
+            {
+                return "fwNES format - 16 byte header";
+            }
+        }
+        
+        public MemoryStream Normalize(Stream Datastream)
+        {
+            Datastream.Seek(4, SeekOrigin.Begin);
+            this.Sides = Datastream.ReadByte();
+            if (Datastream.Length < 16) throw new ArgumentException("Stream size is too small to convert");
+            byte[] data = new byte[(Datastream.Length - 16)];
+            Datastream.Seek(16, SeekOrigin.Begin);
+            Datastream.Read(data, 0, data.Length);
+            return new MemoryStream(data);
+        }
+
+        public int Sides
+        {
+            get;
+            private set;
+        }
+    }
+
     public class NintendoFamicom_iNES : IDumpConverter
     {
         public string Description
@@ -47,12 +104,15 @@ namespace dumplib.Image
 
         public MemoryStream Normalize(Stream Datastream)
         {
+            
             if (Datastream.Length < 16) throw new ArgumentException("Stream size is too small to convert");
             byte[] data = new byte[(Datastream.Length - 16)];
             Datastream.Seek(16, SeekOrigin.Begin);
             Datastream.Read(data, 0, data.Length);
             return new MemoryStream(data);
         }
+
+        
     }
 
     public class Nintendo64_CD64 : IDumpConverter

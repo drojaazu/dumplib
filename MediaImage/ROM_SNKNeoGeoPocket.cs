@@ -1,12 +1,13 @@
 ﻿using System;
+using System.IO;
 
 namespace dumplib.Image
 {
     public class SNKNeoGeoPocket_ROM : MediaImage
     {
 
-        private readonly static string HW_Worldwide = "SNK NeoGeo Pocket | NeoGeo Pocket Color";
-        private readonly static string HW_Japan = "SNK ネオジオポケット | ネオジオポケットカラー";
+        private readonly static string HW_Worldwide = "SNK NeoGeo Pocket / NeoGeo Pocket Color";
+        private readonly static string HW_Japan = "SNK ネオジオポケット ／ ネオジオポケットカラー";
 
         public string HardwareName_Japan
         {
@@ -32,14 +33,13 @@ namespace dumplib.Image
             }
         }
 
-        public SNKNeoGeoPocket_ROM(string Filepath)
-            : base(Filepath)
+        public SNKNeoGeoPocket_ROM(Stream Datastream, IDumpConverter Converter = null)
+            : base(Datastream, Converter)
         {
             base.MediaType = MediaTypes.ROM;
             base.HardwareName = SNKNeoGeoPocket_ROM.HW_Worldwide;
-            //base.ReadWholeFile();
-
-            base.SoftwareTitle = GetText_ASCII(0x24, 12);
+            
+            base.SoftwareTitle = dumplib.Text.Transcode.UsingASCII(GetBytes(0x24, 12));
         }
     }
 }

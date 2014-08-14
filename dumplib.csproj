@@ -82,6 +82,8 @@
     </Compile>
     <Compile Include="Gfx\tiles.cs" />
     <Compile Include="Gfx\palettes.cs" />
+    <Compile Include="Layout\datachunk.cs" />
+    <Compile Include="MediaImage\disk_NintendoFamicomDiskSys.cs" />
     <Compile Include="MediaImage\disk_Unknown.cs" />
     <Compile Include="MediaImage\dumpconverters.cs" />
     <Compile Include="MediaImage\mediaimage.cs" />

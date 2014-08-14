@@ -1,5 +1,6 @@
 ﻿using System;
 using dumplib.Layout;
+using System.IO;
 
 namespace dumplib.Image
 {
@@ -43,22 +44,18 @@ namespace dumplib.Image
             private set;
         }*/
 
-        private Dump.iNESHeader inesheader = null;
+        //private Dump.iNESHeader inesheader = null;
 
-        public NintendoFamicom_ROM(string _file)
-            : base(_file)
+        public NintendoFamicom_ROM(Stream Datastream, IDumpConverter Converter = null)
+            : base(Datastream, Converter)
+        {
+            this.Init();
+        }
+
+        private void Init()
         {
             base.MediaType = MediaTypes.ROM;
             base.HardwareName = NintendoFamicom_ROM.HW_Worldwide;
-            //base.ReadWholeFile();
-            //this.Format = Dump.GetDumpType(base.Data);
-            /*switch (this.Format)
-            {
-                case Dump.Formats.iNES:
-                    this.inesheader = new Dump.iNESHeader(base.Data);
-                    base.Data = Dump.Standardize(base.Data, this.Format);
-                    break;
-            }*/
             base.SoftwareTitle = "[Nintendo Famicom software]";
         }
 
@@ -74,7 +71,7 @@ namespace dumplib.Image
             }
             return _out;
         }*/
-
+        /*
         static public class Dump
         {
             public class iNESHeader
@@ -140,6 +137,6 @@ namespace dumplib.Image
                         return Image;
                 }
             }
-        }
+        }*/
     }
 }

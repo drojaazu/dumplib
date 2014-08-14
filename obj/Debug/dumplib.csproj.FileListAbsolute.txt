@@ -1,7 +1,0 @@
-C:\Users\Ryou\Documents\dumplib\bin\Debug\ROMlib.dll
-C:\Users\Ryou\Documents\dumplib\bin\Debug\ROMlib.pdb
-C:\Users\Ryou\Documents\dumplib\obj\Debug\dumplib.csprojResolveAssemblyReference.cache
-C:\Users\Ryou\Documents\dumplib\obj\Debug\dumplib.Gfx.PaletteViewer.resources
-C:\Users\Ryou\Documents\dumplib\obj\Debug\dumplib.csproj.GenerateResource.Cache
-C:\Users\Ryou\Documents\dumplib\obj\Debug\ROMlib.dll
-C:\Users\Ryou\Documents\dumplib\obj\Debug\ROMlib.pdb

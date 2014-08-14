@@ -30,7 +30,7 @@ namespace dumplib.Layout
         {
             get
             {
-                return this.StartOffset + this.Length;
+                return this.StartOffset + (this.Length - 1);
             }
         }
 

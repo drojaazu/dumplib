@@ -4,7 +4,6 @@ using System.Text;
 using dumplib.Gfx;
 using dumplib.Layout;
 
-
 namespace dumplib.Image
 {
     /// <summary>
@@ -13,7 +12,7 @@ namespace dumplib.Image
     public class NintendoSuperFamicom_ROM : MediaImage
     {
         private readonly static string HW_Worldwide = "Super Nintendo Entertainment System (SNES)";
-        private readonly static string HW_JP = "任天堂　スーパーファミコン";
+        private readonly static string HW_JP = "ニンテンドー　スーパーファミコン";
         private readonly static string HW_JP_R = "Nintendo Super Famicom";
 
         public string HardwareName_Worldwide
@@ -72,29 +71,12 @@ namespace dumplib.Image
 
         // --------------------------------------------------- constructor
 
-        /// <summary>
-        /// Creates a new Super Famicom ROM image
-        /// </summary>
-        /// <param name="Filepath">Location of the ROM file</param>
-        public NintendoSuperFamicom_ROM(string Filepath)
-            : base(Filepath)
+        public NintendoSuperFamicom_ROM(Stream Datastream, IDumpConverter Converter = null)
+            : base(Datastream, Converter)
         {
             base.MediaType = MediaTypes.ROM;
             base.HardwareName = NintendoSuperFamicom_ROM.HW_Worldwide;
-            //ReadWholeFile();
             Setup();
-        }
-
-        public NintendoSuperFamicom_ROM(Stream Datastream)
-            : base(Datastream)
-        {
-
-        }
-
-        public NintendoSuperFamicom_ROM(Stream Datastream, IDumpConverter Converter)
-            : base(Datastream, Converter)
-        {
-
         }
 
         private void Setup()
@@ -161,20 +143,22 @@ namespace dumplib.Image
         /// Generates an overview of information about this Super Famicom ROM
         /// </summary>
         /// <returns>String containing the report</returns>
-        public override string Report()
-        {
-            var _out = new StringBuilder(base.Report());
-            _out.AppendLine("Super Famicom Information:");
-            //_out.AppendLine("Dump type: " + this.ImageFormat.GetEnumDesc());
-            _out.AppendLine("Video type: " + this.SoftwareRegionVideoType.GetEnumDesc());
-            return _out.ToString();
-        }
+        /// 
+        // MAKE THIS LOG INFORMATION
+        //public override string Report()
+        //{
+        //    var _out = new StringBuilder(base.Report());
+        //    _out.AppendLine("Super Famicom Information:");
+        //    //_out.AppendLine("Dump type: " + this.ImageFormat.GetEnumDesc());
+        //    _out.AppendLine("Video type: " + this.SoftwareRegionVideoType.GetEnumDesc());
+        //    return _out.ToString();
+        //}
 
         public override Layout.ImageMap AutoMap()
         {
             var _out = base.AutoMap();
             for (uint j = 0; j < base.Datastream.Length / (uint)this.ROMBankSize; j++)
-                _out.Add(new DataChunkInfo(new Range((long)(j * (uint)this.ROMBankSize), (int)this.ROMBankSize), ("ROM Bank " + j.ToString() + " [" + this.ROMBankSize.ToString() + "]")));
+                _out.Add(new ChunkInfo(new Range((long)(j * (uint)this.ROMBankSize), (int)this.ROMBankSize), ("ROM Bank " + j.ToString() + " [" + this.ROMBankSize.ToString() + "]")));
             return _out;
         }
 

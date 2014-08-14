@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace dumplib.Gfx
 {
-    public unsafe static class Misc
+    public static class Misc
     {
         /// <summary> 
         /// A simple zoom resize of a bitmap

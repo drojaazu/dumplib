@@ -24,7 +24,13 @@ namespace dumplib.Text
             }
         }*/
 
-        public Table(Stream Datastream)
+        public string Description
+        {
+            get;
+            set;
+        }
+
+        public Table(Stream Datastream, string Description = null)
         {
             int loaderrors = 0;
             var errors = new StringBuilder();
@@ -95,6 +101,14 @@ namespace dumplib.Text
                             break;
                     }
                     if (identifier != null && identifier.Length > WorkTable.ByteWidth) WorkTable.ByteWidth = identifier.Length;
+
+                    if (string.IsNullOrEmpty(Description))
+                    {
+                        if (Datastream is FileStream) Description = Path.GetFileName((Datastream as FileStream).Name);
+                        else Description = "Text table from data stream";
+                    }
+                    this.Description = Description;
+
                 }
                 catch (Exception ex)
                 {

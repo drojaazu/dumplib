@@ -27,7 +27,7 @@ namespace dumplib.Image
         public void Dispose()
         {
             if (this._disposed) return;
-            // free manager resources here
+            // free managed resources here
 
             this.Datastream.Dispose();
 
@@ -36,23 +36,11 @@ namespace dumplib.Image
 
         #region     CONSTRUCTOR -=:=-=:=-=:=--=:=-=:=-=:=--=:=-=:=-=:=--=:=-=:=-=:=--=:=- CONSTRUCTOR
 
-        public MediaImage(string Filepath)
-        {
-            //this.File = new FileInfo(Filepath);
-            //this.Comments = new List<string>();
-            this.Datastream = System.IO.File.OpenRead(Filepath);
-        }
-
-        public MediaImage(Stream Datastream)
+        protected MediaImage(Stream Datastream, IDumpConverter Converter = null)
         {
             if (Datastream == null) throw new ArgumentNullException();
-            this.Datastream = Datastream;
-        }
-
-        public MediaImage(Stream Datastream, IDumpConverter Converter)
-        {
-            if (Datastream == null) throw new ArgumentNullException();
-            this.Datastream = Converter.Normalize(Datastream);
+            if (Converter == null) this.Datastream = Datastream;
+            else this.Datastream = Converter.Normalize(Datastream);
         }
 
         #endregion  CONSTRUCTOR -=:=-=:=-=:=--=:=-=:=-=:=--=:=-=:=-=:=--=:=-=:=-=:=--=:=- CONSTRUCTOR
@@ -60,55 +48,25 @@ namespace dumplib.Image
 
         #region     PROTECTED MEMBERS -=:=-=:=-=:=--=:=-=:=-=:=--=:=-=:=-=:=--=:=-=:=-=:=--=:=- PROTECTED MEMBERS
 
-        public Stream Datastream = null;
-
-        /// <summary>
-        /// The Data buffer representing the binary data from the medium
-        /// </summary>
-        //protected byte[] Data = null;
-
-        /// <summary>
-        /// Loads the entire file into memory
-        /// </summary>
-        /*protected void ReadWholeFile()
-        {
-            this.Data = System.IO.File.ReadAllBytes(this.File.FullName);
-        }*/
+        
 
         #endregion
 
         #region     PUBLIC MEMBERS -=:=-=:=-=:=--=:=-=:=-=:=--=:=-=:=-=:=--=:=-=:=-=:=--=:=- PUBLIC MEMBERS
+        public Stream Datastream
+        {
+            get;
+            protected set;
+        }
+        
         public MediaTypes MediaType
         {
             get;
             protected set;
         }
 
-        /*public uint DataSize
-        {
-            get
-            {
-                return (uint)this.Data.LongLength;
-            }
-        }*/
-
         /// <summary>
-        /// References the image file on disk
-        /// </summary>
-        /*public FileInfo File
-        {
-            get;
-            private set;
-        }*/
-        
-        public List<string> Comments
-        {
-            get;
-            protected set;
-        }
-
-        /// <summary>
-        /// Title of the software, if available.
+        /// Title of the software, if available
         /// </summary>
         public string SoftwareTitle
         {
@@ -116,6 +74,9 @@ namespace dumplib.Image
             protected set;
         }
 
+        /// <summary>
+        /// Name of the hardware this software is intended to run on, if available
+        /// </summary>
         public string HardwareName
         {
             get;
@@ -137,11 +98,11 @@ namespace dumplib.Image
         /// <summary>
         /// Returns an array of bytes from the specified offset
         /// </summary>
-        /// <param name="ChunkAddr">Chunk address</param>
+        /// <param name="Addr">Chunk address</param>
         /// <returns></returns>
-        public byte[] GetBytes(Range ChunkAddr)
+        public byte[] GetBytes(Range Addr)
         {
-            return this.GetBytes(ChunkAddr.StartOffset, ChunkAddr.Length);
+            return this.GetBytes(Addr.StartOffset, Addr.Length);
         }
 
         /// <summary>
@@ -158,6 +119,25 @@ namespace dumplib.Image
             return data;
         }
 
+        public DataChunk GetChunk(Range Addr)
+        {
+            return this.GetChunk(new ChunkInfo(Addr));
+        }
+
+        public DataChunk GetChunk(long Offset, int Length)
+        {
+            return this.GetChunk(new Range(Offset, Length));
+        }
+
+        /// <summary>
+        /// Returns a DataChunk containing the data from the specified address range, as the specified chunk type
+        /// </summary>
+        /// <param name="ChunkInfo"></param>
+        /// <returns></returns>
+        public DataChunk GetChunk(IChunkInfo ChunkInfo)
+        {
+            return new DataChunk(this.GetBytes(ChunkInfo.Addr), ChunkInfo);
+        }
 
         /// <summary>
         /// Extracts a string of text from the Data buffer using ASCII encoding
@@ -265,67 +245,17 @@ namespace dumplib.Image
             return dumplib.Search.Sequence(GetBytes(Addr), Sequence);
         }
 
+        /// <summary>
+        /// Extracts a graphics tile from the Data buffer
+        /// </summary>
+        /// <param name="Addr">Chunk address of the tile data</param>
+        /// <param name="Converter">Converter to use</param>
+        /// <param name="Palette">Color palette to apply</param>
+        /// <param name="TilesPerRow">Number of tiles to render per row in the final image</param>
+        /// <returns>Bitmapped image of all tiles extracted</returns>
         public Bitmap GetTileGfx(Range Addr, ITileConverter Converter, ColorPalette Palette, int TilesPerRow)
         {
             return dumplib.Gfx.TileGfx.GetTiles(GetBytes(Addr), Converter, Palette, TilesPerRow);
-        }
-
-        /// <summary>
-        /// Generates a readable overview of information about the media image
-        /// </summary>
-        /// <returns>String containing the report</returns>
-        virtual public string Report()
-        {
-            /*
-            var _out = new StringBuilder();
-            _out.AppendLine("Filename: " + this.File.Name);
-            _out.AppendLine("Location: " + this.File.DirectoryName);
-            if (this.Comments.Count != 0)
-            {
-                _out.AppendLine("Comments:");
-                foreach (string s in this.Comments)
-                    _out.AppendLine("-- " + s);
-            }
-            return _out.ToString();
-             * */
-            return null;
-        }
-
-        /// <summary>
-        /// Generates a human-readable output of byte data
-        /// </summary>
-        /// <param name="Addr">Chunk address to display</param>
-        /// <returns></returns>
-        public string GetBytesReadable(Range Addr)
-        {
-            /*
-            // div = amount of complete lines of 16 bytes, mod = left over bytes
-            long div16 = Addr.Length / 16;
-            long mod16 = Addr.Length % 16;
-            StringBuilder _out = new StringBuilder();
-
-            // for each complete line, write out a full 16 column line of bytes
-            if (div16 > 0)
-            {
-                for (int t = 0; t < div16; t++)
-                {
-                    _out.Append((Addr.StartOffset + (t * 16)).ToString("X8"));
-                    for (int y = 0; y < 16; y++)
-                        _out.Append(' ' + Data[Addr.StartOffset + (t * 16) + y].ToString("X2"));
-                    _out.Append(Environment.NewLine);
-                }
-            }
-
-            // if there are any bytes left over, write them out
-            if (mod16 > 0)
-            {
-                _out.Append((Addr.StartOffset + (div16 * 16)).ToString("X8"));
-                for (long y = Addr.StartOffset + (div16 * 16); y < Addr.StartOffset + (div16 * 16) + mod16; y++)
-                    _out.Append(' ' + Data[y].ToString("X2"));
-            }
-            return _out.ToString();
-            */
-            return null;
         }
 
         /// <summary>
@@ -336,22 +266,11 @@ namespace dumplib.Image
         {
             var _out = new ImageMap();
             _out.Description = "Auto-generated";
-            _out.Add(new DataChunkInfo(new Range(0, (int)this.Datastream.Length), "Entire Image"));
+            _out.Add(new ChunkInfo(new Range(0, (int)this.Datastream.Length), "Entire Image"));
             return _out;
         }
         
         #endregion
-
         
-
-        /// <summary>
-        /// Adds a string to the comment list
-        /// </summary>
-        /// <param name="Comment">The comment to add</param>
-        internal void AddComment(string Comment)
-        {
-            this.Comments.Add(Comment);
-        }
-   
     }
 }
