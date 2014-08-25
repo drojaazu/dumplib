@@ -1,30 +1,40 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.ComponentModel;
-
-// CGRAM begins at 0x618 in ZST files
+using System.IO;
 
 namespace dumplib.Gfx
 {
+    /// <summary>
+    /// Interface for converting a unique color palette to a standard system ColorPalette object
+    /// </summary>
     public interface IPaletteConverter
     {
+        /// <summary>
+        /// Identifier for this converter
+        /// </summary>
         string ID
         {
             get;
         }
 
+        /// <summary>
+        /// Description of this converter
+        /// </summary>
         string Description
         {
             get;
         }
 
+        /// <summary>
+        /// Method to perform the conversion
+        /// </summary>
+        /// <param name="Data">Raw data to convert</param>
+        /// <returns>Standard ColorPalette object</returns>
         ColorPalette GetPalette(byte[] Data);
     }
 
-    public static class CreatePalette
+    public static class GetPalette
     {
 
         /// <summary>
@@ -66,42 +76,36 @@ namespace dumplib.Gfx
             for (int t = 0; t < 256; t++) _out.Entries[t] = Color.FromArgb(0, 0, 0, 0);
             return _out;
         }
-    }
 
-
-    public static class LoadPalette
-    {
         /// <summary>
         /// Gets a palette from a ZSNES savestate
         /// </summary>
         /// <param name="Filepath">Location of the savestate file</param>
         /// <returns>Standard color palette</returns>
-        /// 
-
         public static ColorPalette From_Savestate_ZST(string Filepath)
         {
             if (string.IsNullOrEmpty(Filepath)) throw new ArgumentException("Invalid filepath");
+            using (var fs = new System.IO.FileStream(Filepath, System.IO.FileMode.Open))
+            {
+                return From_Savestate_ZST(fs);
+            }
+        }
+
+        /// <summary>
+        /// Gets a palette from a ZSNES savestate
+        /// </summary>
+        /// <param name="DataStream">Stream containing the savestate data</param>
+        /// <returns>Standard color palette</returns>
+        public static ColorPalette From_Savestate_ZST(Stream DataStream)
+        {
+            if (DataStream == null) throw new ArgumentNullException();
             var cgram = new byte[512];
             var converter = new PaletteConverters.Nintendo_SuperFamicom_CGRAM();
-            using (var _s = new System.IO.FileStream(Filepath, System.IO.FileMode.Open))
-            {
-                _s.Seek(0x618, System.IO.SeekOrigin.Begin);
-                _s.Read(cgram, 0, 512);
-            }
+
+            DataStream.Seek(0x618, System.IO.SeekOrigin.Begin);
+            DataStream.Read(cgram, 0, 512);
             return converter.GetPalette(cgram);
         }
-/*
-        public static ColorPalette From_Savestate_ZST(string Filepath)
-        {
-            var cgram = new byte[512];
-            var converter = new PaletteConverters.Nintendo_SuperFamicom_CGRAM();
-            using (var _s = new System.IO.FileStream(Filepath, System.IO.FileMode.Open))
-            {
-                _s.Seek(0x618,System.IO.SeekOrigin.Begin);
-                _s.Read(cgram,0,512);
-            }
-            return converter.GetPalette(cgram);
-        }*/
 
         /// <summary>
         /// Gets a palette from a Gens savestate
@@ -111,13 +115,24 @@ namespace dumplib.Gfx
         public static ColorPalette From_Savestate_GSX(string Filepath)
         {
             if (string.IsNullOrEmpty(Filepath)) throw new ArgumentException("Invalid filepath");
+            using (var fs = new System.IO.FileStream(Filepath, System.IO.FileMode.Open))
+            {
+                return From_Savestate_GSX(fs);
+            }
+        }
+
+        /// <summary>
+        /// Gets a palette from a Gens savestate
+        /// </summary>
+        /// <param name="DataStream">Stream containing the savestate data</param>
+        /// <returns>Standard color palette</returns>
+        public static ColorPalette From_Savestate_GSX(Stream DataStream)
+        {
+            if (DataStream == null) throw new ArgumentNullException();
             var cram = new byte[128];
             var converter = new PaletteConverters.Sega_Megadrive_CRAM();
-            using (var _s = new System.IO.FileStream(Filepath, System.IO.FileMode.Open))
-            {
-                _s.Seek(0x11f78, System.IO.SeekOrigin.Begin);
-                _s.Read(cram, 0, 128);
-            }
+            DataStream.Seek(0x11f78, System.IO.SeekOrigin.Begin);
+            DataStream.Read(cram, 0, 128);
             return converter.GetPalette(cram);
         }
 
@@ -133,6 +148,18 @@ namespace dumplib.Gfx
             return converter.GetPalette(System.IO.File.ReadAllBytes(Filepath));
         }
 
-
+        /// <summary>
+        /// Gets a palette from a TileLayer palette
+        /// </summary>
+        /// <param name="DataStream">Stream containing the palette data</param>
+        /// <returns>Standard color palette</returns>
+        public static ColorPalette From_TilelayerPalette(Stream DataStream)
+        {
+            if (DataStream == null) throw new ArgumentNullException();
+            var converter = new PaletteConverters.TileLayerPro();
+            var alldata = new byte[DataStream.Length];
+            DataStream.Read(alldata, 0, alldata.Length);
+            return converter.GetPalette(alldata);
+        }
     }
 }

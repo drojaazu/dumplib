@@ -22,22 +22,7 @@ namespace dumplib.Gfx.ColorConverters
                 return "Sega Megadrive native color format";
             }
         }
-
-        // lol using short just to move the values back around
-        // what were u smoking m8?
-        // make this a byte array!
-        /*public Color GetColor(short Data)
-        {
-            // 0000BBBBGGGGRRRR, linear
-            int b = (Data & 0xf00) >> 8;
-            int g = (Data & 0xf0) >> 4;
-            int r = Data & 0xf;
-            return Color.FromArgb(
-                (r << 4) + r,
-                (g << 4) + g,
-                (b << 4) + b);
-        }*/
-
+        
         public Color GetColor(byte[] Data)
         {
             // 0000BBBBGGGGRRRR, linear
@@ -69,26 +54,6 @@ namespace dumplib.Gfx.ColorConverters
             }
         }
 
-        /*
-        /// <summary>
-        /// Converts a Nintendo Super Famicom color
-        /// </summary>
-        /// <param name="Data">Source color value</param>
-        /// <returns>Standard color</returns>
-        public Color GetColor(short Data)
-        {
-            // 0BBBBBGGGGGRRRRR, planar
-            return Color.FromArgb(
-                ((Data & 0x1f) * 255) / 31,
-                (((Data & 0x3e0) >> 5) * 255) / 31,
-                (((Data & 0x7c00) >> 10) * 255) / 31);
-        }*/
-
-        /// <summary>
-        /// Converts a Nintendo Super Famicom color
-        /// </summary>
-        /// <param name="Data">Source color value</param>
-        /// <returns>Standard color</returns>
         public Color GetColor(byte[] Data)
         {
             // 0BBBBBGGGGGRRRRR, planar
@@ -119,25 +84,7 @@ namespace dumplib.Gfx.ColorConverters
                 return "Sega Master System native color format";
             }
         }
-        /*
-        /// <summary>
-        /// Converts a Sega Master System color
-        /// </summary>
-        /// <param name="Data">Source color value</param>
-        /// <returns>Standard color</returns>
-        public static Color From_SMS(byte Data)
-        {
-            return Color.FromArgb(
-                ((Data & 3) * 255) / 3,
-                (((Data & 12) >> 2) * 255) / 3,
-                (((Data & 48) >> 4) * 255) / 3);
-        }*/
 
-        /// <summary>
-        /// Converts a Sega Master System color
-        /// </summary>
-        /// <param name="Data">Source color value</param>
-        /// <returns>Standard color</returns>
         public Color GetColor(byte[] Data)
         {
             // 00BBGGRR
@@ -167,25 +114,6 @@ namespace dumplib.Gfx.ColorConverters
             }
         }
 
-        /*
-        /// <summary>
-        /// Converts a Sega GameGear color
-        /// </summary>
-        /// <param name="Data">Source color value</param>
-        /// <returns>Standard color</returns>
-        public static Color From_SGG(short Data)
-        {
-            return Color.FromArgb(
-                (((Data & 0xf0) >> 4) * 255) / 7,
-                (((Data & 0xf00) >> 8) * 255) / 7,
-                ((Data & 0xf) * 255) / 7);
-        }*/
-
-        /// <summary>
-        /// Converts a Sega GameGear color
-        /// </summary>
-        /// <param name="Data">Source color value</param>
-        /// <returns>Standard color</returns>
         public Color GetColor(byte[] Data)
         {
             // 0000GGGGRRRRBBBB

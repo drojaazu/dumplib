@@ -107,7 +107,7 @@ namespace dumplib.Gfx
                 this.linewidth = value;
                 
                 if (this.linewidth != 256)
-                    this.subpalette = this.linewidth == 2 ? dumplib.Gfx.CreatePalette.New_1bit() : dumplib.Gfx.CreatePalette.New_4bit(true);
+                    this.subpalette = this.linewidth == 2 ? dumplib.Gfx.GetPalette.New_1bit() : dumplib.Gfx.GetPalette.New_4bit(true);
                 this.Line = 0;
             }
         }
@@ -151,8 +151,8 @@ namespace dumplib.Gfx
             this.linewidth = 16;
             this.selectedcolor = 0;
             this.selectrect = new Rectangle(0, 0, this.tilesize * this.linewidth, this.tilesize);
-            this.fullpalette = dumplib.Gfx.CreatePalette.New_8bit();
-            this.subpalette = dumplib.Gfx.CreatePalette.New_4bit(true);
+            this.fullpalette = dumplib.Gfx.GetPalette.New_8bit();
+            this.subpalette = dumplib.Gfx.GetPalette.New_4bit(true);
         }
 
         protected override void OnLoad(EventArgs e)
@@ -160,7 +160,7 @@ namespace dumplib.Gfx
             //base.OnLoad(e);
             
             this.selectrect = new Rectangle(0, 0, this.tilesize * this.linewidth, this.tilesize);
-            this.subpalette = this.linewidth == 2 ? dumplib.Gfx.CreatePalette.New_1bit() : dumplib.Gfx.CreatePalette.New_4bit();
+            this.subpalette = this.linewidth == 2 ? dumplib.Gfx.GetPalette.New_1bit() : dumplib.Gfx.GetPalette.New_4bit();
             this.DrawGrid();
             this.DrawSelection();
             this.DrawColorSelection();

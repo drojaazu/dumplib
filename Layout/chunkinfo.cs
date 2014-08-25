@@ -7,17 +7,24 @@ using System.ComponentModel;
 
 namespace dumplib.Layout
 {
-    public enum DumpTypes
+    /// <summary>
+    /// The expected type of information for a given chunk of data
+    /// </summary>
+    public enum DataTypes
     {
         Raw = 0,
         Text,
         Gfx,
-        Audio
+        Audio,
+        Other
     }
 
+    /// <summary>
+    /// Contains metadata about a chunk of data relative to its source
+    /// </summary>
     public interface IChunkInfo
     {
-        DumpTypes DumpType
+        DataTypes DumpType
         {
             get;
         }
@@ -36,29 +43,6 @@ namespace dumplib.Layout
         void ParseArgs(string[] Options);
     }
 
-    /*public abstract class ChunkInfo
-    {
-        public ChunkInfo(Range Addr, string Description)
-        {
-            if (Addr == null) throw new ArgumentNullException();
-            this.Addr = Addr;
-            if (string.IsNullOrEmpty(Description)) Description = string.Format("{0} bytes of data", Addr.Length);
-            this.Description = Description;
-        }
-
-        public abstract Range Addr
-        {
-            get;
-            protected set;
-        }
-
-        public abstract string Description
-        {
-            get;
-            protected set;
-        }
-    }*/
-
     /// <summary>
     /// Describes a generic chunk of data
     /// </summary>
@@ -71,11 +55,11 @@ namespace dumplib.Layout
             this.Addr = Addr;
         }
 
-        public DumpTypes DumpType
+        public DataTypes DumpType
         {
             get
             {
-                return Layout.DumpTypes.Raw;
+                return Layout.DataTypes.Raw;
             }
         }
 
@@ -109,11 +93,11 @@ namespace dumplib.Layout
             this.Addr = Addr;
         }
 
-        public DumpTypes DumpType
+        public DataTypes DumpType
         {
             get
             {
-                return Layout.DumpTypes.Raw;
+                return Layout.DataTypes.Raw;
             }
         }
 
@@ -147,56 +131,13 @@ namespace dumplib.Layout
             this.Addr = Addr;
             this.TilesPerRow = null;
             this.Subpalette = null;
-            
-
-            /*
-            // if there is an argument array, cycle through them
-            if (Args != null)
-            {
-                string[] argsplit;
-                for (int t = 0; t < Args.Length; t++)
-                {
-                    argsplit = Args[t].Split('=');
-                    switch (argsplit[0].ToLower())
-                    {
-                        case "format":
-                            switch (argsplit[1].ToLower())
-                            {
-                                case "1bpp":
-                                    this.Format = Gfx.TileFormats.Monochrome;
-                                    break;
-                                case "sfc_4bpp":
-                                    this.Format = Gfx.TileFormats.SuperFamicom_4bpp;
-                                    break;
-                                case "smd_4bpp":
-                                    this.Format = Gfx.TileFormats.Megadrive;
-                                    break;
-                                case "ngb_2bpp":
-                                    this.Format = Gfx.TileFormats.Gameboy;
-                                    break;
-                                case "sgg_4bpp":
-                                    this.Format = Gfx.TileFormats.Sega_8bit;
-                                    break;
-                                default:
-                                    throw new ArgumentException("Unknown argument value " + argsplit[1]);
-                            }
-                            break;
-                        case "subpalette":
-                            this.Subpalette = int.Parse(argsplit[1]);
-                            break;
-                        default:
-                            throw new ArgumentException("Unknown argument " + argsplit[0]);
-                    }
-                }
-            }
-             * */
         }
 
-        public DumpTypes DumpType
+        public DataTypes DumpType
         {
             get
             {
-                return Layout.DumpTypes.Gfx;
+                return Layout.DataTypes.Gfx;
             }
         }
 
@@ -278,55 +219,16 @@ namespace dumplib.Layout
             this.Addr = Addr;
             if (string.IsNullOrEmpty(Description)) Description = "Text chunk";
             this.Description = Description;
-            /*
-            if (Args != null)
-            {
-                string[] argsplit;
-                for (int t = 0; t < Args.Length; t++)
-                {
-                    argsplit = Args[t].Split('=');
-                    switch (argsplit[0].ToLower())
-                    {
-                        case "enc":
-                            switch (argsplit[1].ToLower())
-                            {
-                                case "sjis":
-                                    this.Encoding = Encoding.GetEncoding(932);
-                                    break;
-                                case "ascii":
-                                    this.Encoding = ASCIIEncoding.ASCII;
-                                    break;
-                                default:
-                                    int codepage;
-                                    if (!int.TryParse(argsplit[1], out codepage))
-                                        if (!int.TryParse(argsplit[1], System.Globalization.NumberStyles.HexNumber,System.Globalization.CultureInfo.InvariantCulture,out codepage))
-                                            throw new ArgumentException("Text -> Encoding -> Value is not a number: " + argsplit[1]);
-                                    this.Encoding = Encoding.GetEncoding(codepage);
-                                    break;
-                            }
-                            this.UsesTextTable = false;
-                            break;
-                        case "tableid":
-                            this.TableID = argsplit[1].ToLower();
-                            this.UsesTextTable = true;
-
-                            break;
-
-                    }
-                }
-            }
-            */
-
             this.Encoding = null;
             this.UseTextTable = null;
             this.TableID = null;
         }
 
-        public DumpTypes DumpType
+        public DataTypes DumpType
         {
             get
             {
-                return Layout.DumpTypes.Text;
+                return Layout.DataTypes.Text;
             }
         }
 
@@ -397,22 +299,7 @@ namespace dumplib.Layout
     }
 
     /// <summary>
-    /// Describes a chunk of pointer data
-    /// </summary>
-    /*public class PointerChunkInfo : ChunkInfo
-    {
-        // Pointer table
-        public PointerChunkInfo(Range Addr, string Title = null) :
-            base(Addr, Title)
-        {
-            base.Type = ChunkTypes.PointerTable;
-            base.Title = Title;
-        }
-
-    }*/
-
-    /// <summary>
-    /// Describes a chunk of machine language
+    /// Describes a chunk of compiled, machine language code
     /// </summary>
     public class CodeChunkInfo : IChunkInfo
     {
@@ -425,11 +312,11 @@ namespace dumplib.Layout
             this.Description = Description;
         }
 
-        public DumpTypes DumpType
+        public DataTypes DumpType
         {
             get
             {
-                return Layout.DumpTypes.Raw;
+                return Layout.DataTypes.Raw;
             }
         }
 
@@ -459,6 +346,7 @@ namespace dumplib.Layout
 
     /// <summary>
     /// Describes a chunk of compressed data
+    /// (this will be further fleshed out as the Compression functions are added to dumpster)
     /// </summary>
     public class CompressedChunkInfo : IChunkInfo
     {
@@ -468,11 +356,11 @@ namespace dumplib.Layout
             private set;
         }
 
-        public DumpTypes DumpType
+        public DataTypes DumpType
         {
             get
             {
-                return Layout.DumpTypes.Raw;
+                return Layout.DataTypes.Raw;
             }
         }
 
@@ -493,43 +381,12 @@ namespace dumplib.Layout
 
         }
 
-        public dumplib.Compression.CompressionFormats Compression
-        {
-            get;
-            private set;
-        }
-        
         public CompressedChunkInfo(Range Addr = null, string Description = null)
         {
             if (string.IsNullOrEmpty(Description)) Description = "Compressed chunk";
             this.Description = Description;
             this.Addr = Addr;
-            /*
-            if (Args != null)
-            {
-                string[] tempsplit;
-                for (int t = 0; t < Args.Length; t++)
-                {
-                    tempsplit = Args[t].Split('=');
-                    switch (tempsplit[0].ToLower())
-                    {
-                        case "cmp":
-                            switch (tempsplit[1].ToLower())
-                            {
-                                case "unknown":
-                                    this.Compression = dumplib.Compression.CompressionFormats.Unknown;
-                                    break;
-                                case "kosinki":
-                                    this.Compression = dumplib.Compression.CompressionFormats.Kosinski;
-                                    break;
-                                default:
-                                    throw new ArgumentException("Unknown argument value " + tempsplit[1]);
-                            }
-                            break;
-                    }
-                }
-            }
-             */
+            
         }
     }
 }

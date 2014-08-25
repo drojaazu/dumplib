@@ -1,8 +1,6 @@
 ﻿using System; 
 using System.Drawing;
 using System.Drawing.Imaging;
-//using System.Text;
-//using System.Windows.Forms;
 
 namespace dumplib.Gfx.TileConverters
 {
@@ -222,11 +220,6 @@ namespace dumplib.Gfx.TileConverters
             }
         }
 
-        /// <summary>
-        /// Transcodes a 1 bit per pixel tile into standard bitmap data
-        /// </summary>
-        /// <param name="TileData">Array of bytes to decode. The array MUST contain exactly 8 bytes.</param>
-        /// <returns>Array of bytes in standard bitmap format</returns>
         public byte[] GetTile(byte[] TileData)
         {
             if (TileData.Length != 8)
@@ -456,11 +449,6 @@ namespace dumplib.Gfx.TileConverters
             }
         }
 
-        /// <summary>
-        /// Transcodes a Nintendo Famicom tile into standard bitmap data
-        /// </summary>
-        /// <param name="TileData">Array of bytes to decode. The array MUST contain exactly 16 bytes.</param>
-        /// <returns>Array of bytes in standard bitmap format</returns>
         public byte[] GetTile(byte[] TileData)
         {
             if (TileData.Length != 16)
@@ -533,11 +521,6 @@ namespace dumplib.Gfx.TileConverters
             }
         }
 
-        /// <summary>
-        /// Transcodes a 4-bit per pixel Nintendo Super Famicom tile into standard bitmap data
-        /// </summary>
-        /// <param name="TileData">Array of bytes to decode. The array MUST contain exactly 16 bytes.</param>
-        /// <returns>Array of bytes in standard bitmap format</returns>
         public byte[] GetTile(byte[] TileData)
         {
             if (TileData.Length != 32)
@@ -611,12 +594,6 @@ namespace dumplib.Gfx.TileConverters
             }
         }
 
-
-        /// <summary>
-        /// Transcodes a Sega GameGear/Master System tile into standard bitmap data
-        /// </summary>
-        /// <param name="TileData">Array of bytes to decode. The array MUST contain exactly 16 bytes.</param>
-        /// <returns>Array of bytes in standard bitmap format</returns>
         public byte[] GetTile(byte[] TileData)
         {
             if (TileData.Length != 32)
@@ -689,11 +666,6 @@ namespace dumplib.Gfx.TileConverters
             }
         }
 
-        /// <summary>
-        /// Transcodes a Sega Megadrive tile into standard bitmap data
-        /// </summary>
-        /// <param name="TileData">Array of bytes to decode. The array MUST contain exactly 16 bytes.</param>
-        /// <returns>Array of bytes in standard bitmap format</returns>
         public byte[] GetTile(byte[] TileData)
         {
             if (TileData.Length != 32)

@@ -5,14 +5,23 @@ using System.Text;
 
 namespace dumplib.Layout
 {
+    /// <summary>
+    /// Represents a chunk of dumped data
+    /// </summary>
     public class DataChunk
     {
+        /// <summary>
+        /// Information about the data relative to its source
+        /// </summary>
         public IChunkInfo Info
         {
             get;
             private set;
         }
 
+        /// <summary>
+        /// The chunk of raw data
+        /// </summary>
         public byte[] Data
         {
             get;

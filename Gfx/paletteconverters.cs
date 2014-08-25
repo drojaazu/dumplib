@@ -29,11 +29,9 @@ namespace dumplib.Gfx.PaletteConverters
         {
             if (Data.Length < 128) throw new ArgumentOutOfRangeException("Sega Megadrive CRAM palette must be at least 128 bytes");
 
-            var _out = CreatePalette.New_8bit(true);
+            var _out = Gfx.GetPalette.New_8bit(true);
 
-            //for (int t = 0; t < 64; t++)
             for (int t = 0, entrycount = 0; t < 128; t += 2, entrycount++)
-                //_out.Entries[t] = GetColor.From_SMD((short)((Data[t * 2] << 8) + Data[(t * 2) + 1]));
                 _out.Entries[entrycount] = ConvertColor.GetColor(new byte[2] { Data[t], Data[t + 1] });
             return _out;
         }
@@ -63,7 +61,7 @@ namespace dumplib.Gfx.PaletteConverters
         {
             if (Data.Length < 512) throw new ArgumentOutOfRangeException("Nintendo Super Famicom palette must be at least 512 bytes");
 
-            var _out = CreatePalette.New_8bit(true);
+            var _out = Gfx.GetPalette.New_8bit(true);
             for (int t = 0, entrycount = 0; t < 512; t += 2, entrycount++)
                 _out.Entries[entrycount] = ConvertColor.GetColor(new byte[2] { Data[t], Data[t + 1] });
             return _out;
@@ -93,14 +91,13 @@ namespace dumplib.Gfx.PaletteConverters
         {
             if (Data.Length < 4 || Data[0] != 0x54 || Data[1] != 0x50 || Data[2] != 0x4c)
             {
-                //Log.Error("(LoadFromTPL) File is not a valid TileLayer palette");
-                return null;
+                throw new ArgumentException("Invalid TileLayer palette data");
             }
 
             // mode: 0 = RGB, 1 = NES, 2 = SNES/GBC/GBA
             // to do - check that there are base-16 number of entries up to 256 in the tpl file
 
-            var _out = CreatePalette.New_8bit();
+            var _out = Gfx.GetPalette.New_8bit();
             int palindex = 0;
 
             switch (Data[3])
@@ -108,8 +105,7 @@ namespace dumplib.Gfx.PaletteConverters
                 case 0:
                     if ((Data.Length - 4) / 3 > 256)
                     {
-                        //Log.Error("(LoadFromTPL) Incorrect number of palette entries (RGB format)");
-                        return null;
+                        throw new IndexOutOfRangeException("Invalid number of palette entries in TileLayer palette data (RGB format)");
                     }
                     for (int t = 4; t < Data.Length; t += 3)
                     {
@@ -118,12 +114,11 @@ namespace dumplib.Gfx.PaletteConverters
                     }
                     break;
                 case 1:
-                    throw new NotImplementedException("LoadTPL: no NES format support right now");
+                    throw new NotImplementedException("NES formatted TileLayer palettes not supported right now");
                 case 2:
                     if ((Data.Length - 4) / 2 > 256)
                     {
-                        //Log.Error("(LoadFromTPL) Incorrect number of palette entries (SFC format)");
-                        return null;
+                        throw new IndexOutOfRangeException("Invalid number of palette entries in TileLayer palette data (SNES format)");
                     }
                     for (int t = 4; t < Data.Length; t += 2)
                     {

@@ -7,18 +7,18 @@ using System.Text;
 namespace dumplib.Layout
 {
     /// <summary>
-    /// A collection of address ranges that map to a file with supporting metadata to describe each range.
+    /// A collection of address ranges that map to a media image with supporting metadata to describe each range.
     /// </summary>
     public class ImageMap
     {
         public static Dictionary<string, Type> ChunkTypes = new Dictionary<string, Type>()
         {
-            {"D",typeof(ChunkInfo)},    
-            {"T",typeof(TextChunkInfo)},
-            {"G",typeof(GfxChunkInfo)},
-            {"C",typeof(CompressedChunkInfo)},
-            {"P",typeof(CodeChunkInfo)},
-            {"F",typeof(FileChunkInfo)}
+            {"D", typeof(ChunkInfo)},    
+            {"T", typeof(TextChunkInfo)},
+            {"G", typeof(GfxChunkInfo)},
+            {"C", typeof(CompressedChunkInfo)},
+            {"P", typeof(CodeChunkInfo)},
+            {"F", typeof(FileChunkInfo)}
         };
 
         #region     CONSTRUCTOR -=:=-=:=-=:=--=:=-=:=-=:=--=:=-=:=-=:=--=:=-=:=-=:=--=:=- CONSTRUCTOR

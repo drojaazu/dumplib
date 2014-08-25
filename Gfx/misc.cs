@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.ComponentModel;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace dumplib.Gfx
@@ -10,7 +8,7 @@ namespace dumplib.Gfx
     public static class Misc
     {
         /// <summary> 
-        /// A simple zoom resize of a bitmap
+        /// A simple zoom resize of an 8-bit bitmap
         /// </summary> 
         /// <param name="Image">The image to resize</param> 
         /// <param name="Zoom">The size multiplier</param> 
@@ -27,23 +25,22 @@ namespace dumplib.Gfx
 
             // lets cache some values to makes things a tiny bit faster
             // stride is the length of the line in bytes (width * bytes per pixel)
+            // (conveniently, since we're working with an 8bit indexed image, it's 1 byte per pixel)
             int srcStride = srcBmpData.Stride,
-            //total size in bytes of the source image
+                //total size in bytes of the source image
                 srcBytes = srcStride * Image.Height,
-            
-            // final image dimensions
+
+                // final image dimensions
                 outWidth = Image.Width * Zoom,
                 outHeight = Image.Height * Zoom,
-            // final image stride is just the stride * zoom
+                // final image stride is just the stride * zoom
                 outStride = srcStride * Zoom,
-            // final image size in bytes
-                outBytes=outStride * outHeight,
-            // a 'row' is the height of a resized, single line of pixels
-            // i.e. zoom factor of 4, one pixel is now 4 pixels high
-            // the amount of bytes in a row, then, is the size of one final image Stride times the zoom factor
+                // final image size in bytes
+                outBytes = outStride * outHeight,
+                // a 'row' is the height of a resized, single line of pixels
+                // i.e. zoom factor of 4, one pixel is now 4 pixels high
+                // the amount of bytes in a row, then, is the size of one final image Stride times the zoom factor
                 outRowBytes = outStride * Zoom;
-
-            
             
             // holds the actual data for both images
             byte[] srcData =  new byte[srcBytes],
@@ -84,31 +81,14 @@ namespace dumplib.Gfx
                 for (int j = 0; j < Zoom; j++)
                     Buffer.BlockCopy(thisstride, 0, outData, (outRowBytes * srcLoopH) + (outStride * j), thisstride.Length);
             }
+            // create the final output image object with all the final dimensions...
             Bitmap _out = new Bitmap(outWidth, outHeight, PixelFormat.Format8bppIndexed);
+            // safely copy our new bitmap data as a byte array into the final image and let it go
             var writetoout = _out.LockBits(new Rectangle(Point.Empty, _out.Size), ImageLockMode.WriteOnly, PixelFormat.Format8bppIndexed);
-            // safely copy our new bitmap data as a byte array into the final image
             Marshal.Copy(outData, 0, writetoout.Scan0, outData.Length);
             _out.UnlockBits(writetoout);
 
-            // creating a new bitmap with our modified data requires an intptr, so we'll need to get a pointer to the array...
-
-
-
-            //IntPtr outstart = System.Runtime.InteropServices.Marshal.AllocHGlobal(outData.Length);
-            //System.Runtime.InteropServices.Marshal.Copy(outData, 0, outstart, outData.Length);
-            /*fixed (byte* outStart = outData)
-            {
-                // ... and convert that pointer to an intptr
-                    
-                _out = new Bitmap(outW, outH, outStride, Image.PixelFormat, (IntPtr)outStart);
-                //BitmapData test = new BitmapData();
-                    
-            }*/
-            // release the original image
-            //System.Runtime.InteropServices.Marshal.FreeHGlobal(outstart);
-            
-
-            //copy over the palette from the original
+            //finally, copy over the palette from the original
             _out.Palette = Image.Palette;
             return _out;
         }
