@@ -1,10 +1,12 @@
 ﻿using System;
 using dumplib.Layout;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace dumplib.Image
 {
-    public class NintendoFamicomDiskSys_disk : MediaImage
+    public class NintendoFamicomDiskSys_disk : DiskImage
     {
         private readonly static string HW_JP = "ニンテンド　ファミコン　ディスクシステム";
         private readonly static string HW_JP_R = "Nintendo Famicom Disk System";
@@ -25,7 +27,7 @@ namespace dumplib.Image
             }
         }
 
-        public static class Dump
+        /*public static class Dump
         {
             public enum Formats
             {
@@ -81,35 +83,13 @@ namespace dumplib.Image
                 }
 
             }
-        }
-
-        public FDS_Side[] Sides
-        {
-            get;
-            private set;
-        }
+        }*/
 
         public NintendoFamicomDiskSys_disk(Stream Datastream, IDumpConverter Converter = null)
             : base(Datastream, Converter)
         {
             base.MediaType = MediaTypes.Disk;
             base.HardwareName = NintendoFamicomDiskSys_disk.HW_JP_R;
-            
-            //this.FileFormat = Dump.GetDumpFormat(this.Data);
-            //switch (this.FileFormat)
-            //{
-            //    case Dump.Formats.FDS:
-            //        this.Sides = new FDS_Side[GetByte(4)];
-            //        Dump.Standardize(base.Data, this.FileFormat);
-            //        break;
-            //    case Dump.Formats.FAM:
-            //        this.Sides = new FDS_Side[GetByte(0)];
-            //        Dump.Standardize(base.Data, this.FileFormat);
-            //        break;
-            //    default:
-            //        this.Sides = new FDS_Side[1];
-            //        break;
-            //}
             
             // this needs to be dealt with more gracefully:
             // FDS/FAM images are dumps of multiple disk sides concatenated into one file
@@ -119,17 +99,21 @@ namespace dumplib.Image
             // we can either look into a more robust dump solution that keeps a copy of the header
             // or just search through the stream and manualy find each disk side (i.e. the "NINTENDO-HVC" string)
             
-            if (Converter != null)
+            /*if (Converter != null)
             {
-                if (Converter is NintendoFDS_FAM) this.Sides = new FDS_Side[(Converter as NintendoFDS_FAM).Sides];
-                else if (Converter is NintendoFDS_FDS) this.Sides = new FDS_Side[(Converter as NintendoFDS_FDS).Sides];
+                if (Converter is NintendoFDS_FAM) this.Sides = new FamicomDiskSystem_Side[(Converter as NintendoFDS_FAM).Sides];
+                else if (Converter is NintendoFDS_FDS) this.Sides = new FamicomDiskSystem_Side[(Converter as NintendoFDS_FDS).Sides];
             }
-            else this.Sides = new FDS_Side[1];
+            else this.Sides = new FamicomDiskSystem_Side[1];*/
 
             base.SoftwareTitle = this.GetText_ASCII(new Layout.Range(16, 4));
-            for (uint h = 0; h < this.Sides.Length; h++)
+            //byte[] thisside = new byte[65500];
+            //this.Datastream.Seek(0, SeekOrigin.Begin);
+            this.Volumes = new FamicomDiskSystem_Side[this.Datastream.Length / 65500];
+            for (uint h = 0; h < this.Volumes.Length; h++)
             {
-                this.Sides[h] = new FDS_Side(this, h * 65500);
+                //this.Datastream.Read(thisside, 0, 65500);
+                base.Volumes[h] = new FamicomDiskSystem_Side(this.Datastream, (h * 65500));
             }
         }
 
@@ -137,16 +121,16 @@ namespace dumplib.Image
         /// Generates a file map describing the Famicom Disk System image
         /// </summary>
         /// <returns>File map</returns>
-        override public ImageMap AutoMap()
+        /*override public ImageMap AutoMap()
         {
             var _out = base.AutoMap();
             //_out.Add(new Chunk(new OffsetLengthPair(0, (uint)this.File.Length), "Entire File"));
-            foreach (FDS_Side s in this.Sides)
+            foreach (FamicomDiskSystem_Side s in this.Sides)
             {
                 _out.Add(new ChunkInfo(s.EntireSide, "Disk " + s.SideNumber + " " + s.DiskSide.ToString() + " (Entire Side)"));
                 foreach (FDS_File f in s.Files)
                 {
-                    if (f.FileType == FDS_File.Type.Character)
+                    if (f.FileType == FDS_File.FileTypes.Character)
                     {
                         var newchunk = new GfxChunkInfo(f.FileData, "Disk" + (s.SideNumber + 1).ToString() + " " + s.DiskSide.ToString() + " - " + f.FileName + " [" + f.FileType.ToString() + "]");
                         
@@ -160,129 +144,258 @@ namespace dumplib.Image
                 }
             }
             return _out;
-        }
+        }*/
 
-        public class FDS_File
+        public class FamicomDiskSystem_Side : IVolume
         {
-            public enum Type : byte
-            {
-                Program = 0,
-                Character,
-                NameTable
-            }
-
-            /// <summary>
-            /// Outlines the entire file (header + data) inside the disk image
-            /// </summary>
-            public Range EntireFile
-            {
-                get;
-                private set;
-            }
-
-            /// <summary>
-            /// Outlines just the file data
-            /// </summary>
-            public Range FileData
-            {
-                get;
-                private set;
-            }
-
-            public Type FileType
-            {
-                get;
-                private set;
-            }
-
-            public short FileSize
-            {
-                get;
-                private set;
-            }
-
-            public string FileName
-            {
-                get;
-                private set;
-            }
-
-            public long NextFileOffset
+            public string ID
             {
                 get
                 {
-                    return this.EntireFile.EndOffset + 1;
+                    return "FDS_FileSystem";
                 }
             }
 
-            public FDS_File(NintendoFamicomDiskSys_disk Image, long Offset)
+            public FilesystemObject GetObject(string Name)
             {
-                //if (Image.GetByte(Offset) != 3) Image.AddComment("Header block may be corrupt/incorrect [FDS Create File Entry]");
-                this.FileName = Image.GetText_SJIS(Offset + 3, 8);
-                //this.FileName = Image.GetText_ASCII(Offset + 3, 8);
-                byte[] temp = Image.GetBytes(Offset + 13, 2);
-                //Array.Reverse(temp);
-                this.FileSize = BitConverter.ToInt16(temp, 0);
-                this.FileType = (Type)Image.GetByte(Offset + 15);
-                
-                this.EntireFile = new Range(Offset, this.FileSize + 17);
-                this.FileData = new Range(Offset + 17, this.FileSize);
-            }
-        }
-
-        public class FDS_Side
-        {
-            public enum SideLabel : byte
-            {
-                SideA = 0,
-                SideB
-            }
-
-            public FDS_Side(NintendoFamicomDiskSys_disk Image, long Offset)
-            {
-                // will probably want to rewrite this to pull the header as a chunk and the file as a chunk
-                // to stop using so many GetByte calls
-                if (Offset > Image.Datastream.Length) throw new ArgumentOutOfRangeException("Offset goes past end of file");
-                if ((Image.Datastream.Length - Offset) < 65500) throw new ArgumentOutOfRangeException("Not enough bytes for a Disk Side from the offset specified");
-
-                this.EntireSide = new Range(Offset, 65500);
-                this.DiskSide = (SideLabel)Image.GetByte(Offset + 21);
-                this.SideNumber = Image.GetByte(Offset+22);
-                int NumFiles = Image.GetByte(Offset + 57);
-                if (NumFiles < 1) throw new Exception("Files on disk cannot be zero. Is this a proper FDS image?");
-                this.Files = new FDS_File[NumFiles];
-
-                long FileStartOffset = Offset + 58;
-                Files[0] = new FDS_File(Image, FileStartOffset);
-                if (NumFiles > 1)
+                for (int x = 0; x < this.Root.Contents.Length; x++)
                 {
-                    for (uint y = 1; y < NumFiles; y++)
-                        Files[y] = new FDS_File(Image, Files[y-1].NextFileOffset);
+                    if (this.Root.Contents[x].Name == Name) return this.Root.Contents[x];
+                }
+                throw new FileNotFoundException();
+            }
+
+            public byte[] GetFile(string Name)
+            {
+                var obj = this.GetObject(Name) as FamicomDiskSystem_File;
+                this.Image.Position = this.StartOffset + (long)obj.Offset;
+                byte[] _out = new byte[obj.Length];
+                this.Image.Read(_out, 0, obj.Length);
+                return _out;
+            }
+
+            //FDS specific data from the disk header
+
+            /// <summary>
+            /// Manufacturer code - a single-byte value representing the producer of the software
+            /// </summary>
+            public byte ManufacturerCode
+            {
+                get;
+                private set;
+            }
+
+            /// <summary>
+            /// Game name - a three byte value representing the name of the game
+            /// </summary>
+            public string GameName
+            {
+                get;
+                private set;
+            }
+
+            /// <summary>
+            /// Game type - a single byte value indicating the type of software
+            /// (Normal disk, Event, Price reduction)
+            /// </summary>
+            public byte GameType
+            {
+                get;
+                private set;
+            }
+
+            public byte GameVersion
+            {
+                get;
+                private set;
+            }
+
+            public byte SideNumber
+            {
+                get;
+                private set;
+            }
+
+            public byte DiskNumber
+            {
+                get;
+                private set;
+            }
+
+            private Stream Image;
+
+            public uint StartOffset
+            {
+                get;
+                private set;
+            }
+
+            public Directory Root
+            {
+                get;
+                private set;
+            }
+
+            public string Label
+            {
+                get
+                {
+                    return string.Format("{0} - Disk {1} Side {2}", this.GameName, this.DiskNumber, this.SideNumber);
                 }
             }
 
-            public SideLabel DiskSide
+            public FamicomDiskSystem_Side(Stream Image, uint Offset)
             {
-                get;
-                private set;
-            }
+                this.Image = Image;
+                this.StartOffset = Offset;
 
-            public byte SideNumber {
-                get;
-                private set;
-            }
+                // Step 1: confirm the data contains valid FDS file system data
+                this.Image.Position = this.StartOffset;
+                // read first byte, confirm it is 0x01
+                // read the next 14 bytes, confirm it is ASCII for "*NINTENDO-HVC*"
+                byte[] verify = new byte[15];
+                this.Image.Read(verify, 0, 15);
+                if (verify[0] != 1 || Encoding.ASCII.GetString(verify, 1, 14) != "*NINTENDO-HVC*") throw new InvalidDataException("Not a valid Famicom Disk System file system (invalid hardware identifier in header)");
 
-            public FDS_File[] Files
-            {
-                get;
-                private set;
-            }
+                //next byte should be the manufacturer code
+                this.ManufacturerCode = (byte)Image.ReadByte();
 
-            public Range EntireSide
-            {
-                get;
-                private set;
+                verify = new byte[3];
+                this.Image.Read(verify, 0, 3);
+                this.GameName = Encoding.ASCII.GetString(verify);
+
+                this.GameType = (byte)this.Image.ReadByte();
+                this.GameVersion = (byte)this.Image.ReadByte();
+
+                this.SideNumber = (byte)this.Image.ReadByte();
+
+                this.DiskNumber = (byte)this.Image.ReadByte();
+
+                // Step 2: set up files
+                // check number of files
+                this.Image.Position = this.StartOffset + 0x38;
+                if (this.Image.ReadByte() != 2) throw new InvalidDataException("Not a valid Famicom Disk System file system (invalid file count block)");
+                int numfiles = this.Image.ReadByte();
+                if (numfiles == 0) Console.WriteLine("File count value is zero; may be invalid data or 'copy protection'");
+                this.Root = new Directory();
+                this.Root.Contents = new FamicomDiskSystem_File[numfiles];
+
+                byte[] filename = new byte[8];
+                byte[] size = new byte[2];
+
+                for (int allfiles = 0; allfiles < numfiles; allfiles++)
+                {
+                    // assume the stream pointer is set properly...
+                    if (this.Image.ReadByte() != 3) if (this.Image.ReadByte() != 2) throw new InvalidDataException("Not a valid Famicom Disk System file system (invalid beginning of file metadata byte while trying file #" + allfiles + ")");
+                    var props = new FamicomDiskSystem_File.Properties();
+                    props.Number = (byte)this.Image.ReadByte();
+                    props.ID = (byte)this.Image.ReadByte();
+                    this.Image.Read(filename, 0, 8);
+                    props.Name = String.Format("{0}:{1}", props.ID.ToString(), Encoding.ASCII.GetString(filename));
+                    string test = Text.Transcode.UsingSJIS(filename);
+
+                    //ignore the destination address for now..
+                    this.Image.ReadByte();
+                    this.Image.ReadByte();
+
+                    this.Image.Read(size, 0, 2);
+                    if (!BitConverter.IsLittleEndian) Array.Reverse(size);
+                    props.Length = (ushort)BitConverter.ToInt16(size, 0);
+
+                    props.Type = (FamicomDiskSystem_File.FileTypes)this.Image.ReadByte();
+                    if (this.Image.ReadByte() != 4) throw new InvalidDataException("Not a valid Famicom Disk System file system (invalid beginning of file data byte while trying file #" + allfiles + ")");
+                    props.Offset = (ulong)this.Image.Position;
+                    //this.objects.Add(props.Name, new FamicomDiskSystem_File(props));
+                    this.Root.Contents[allfiles] = new FamicomDiskSystem_File(props);
+                    this.Image.Seek(props.Length, SeekOrigin.Current);
+                }
             }
         }
     }
+
+    public class FamicomDiskSystem_File : File
+    {
+        public enum FileTypes : byte
+        {
+            Program = 0,
+            Character,
+            NameTable
+        }
+
+        public struct Properties
+        {
+            public byte Number
+            {
+                get;
+                set;
+            }
+
+            public byte ID
+            {
+                get;
+                set;
+            }
+
+            public FileTypes Type
+            {
+                get;
+                set;
+            }
+
+            public string Name
+            {
+                get;
+                set;
+            }
+
+            public ushort Length
+            {
+                get;
+                set;
+            }
+
+            public ulong Offset
+            {
+                get;
+                set;
+            }
+        }
+
+        public FamicomDiskSystem_File(Properties Properties) : base(Properties.Name, Properties.Offset)
+        {
+            this.Name = Properties.Name;
+            this.Offset = Properties.Offset;
+            this.Length = Properties.Length;
+
+            this.Number = Properties.Number;
+            this.Type = Properties.Type;
+            this.ID = Properties.ID;
+        }
+        
+        public byte Number
+        {
+            get;
+            private set;
+        }
+
+        public byte ID
+        {
+            get;
+            private set;
+        }
+
+        public FileTypes Type
+        {
+            get;
+            private set;
+        }
+
+        public ushort Length
+        {
+            get;
+            private set;
+        }
+
+    }
+
 }

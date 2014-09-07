@@ -34,6 +34,11 @@ namespace dumplib.Layout
             get;
         }
 
+        string ID
+        {
+            get;
+        }
+
         Range Addr
         {
             get;
@@ -41,6 +46,11 @@ namespace dumplib.Layout
 
         // passed a line from the image map, will parse it and apply all the options
         void ParseArgs(string[] Options);
+    }
+
+    public class chunkinfo2 : ChunkInfo
+    {
+        
     }
 
     /// <summary>
@@ -55,7 +65,7 @@ namespace dumplib.Layout
             this.Addr = Addr;
         }
 
-        public DataTypes DumpType
+        virtual public DataTypes DumpType
         {
             get
             {
@@ -63,66 +73,57 @@ namespace dumplib.Layout
             }
         }
 
-        public string Description
+        virtual public string ID
+        {
+            get
+            {
+                return "C";
+            }
+        }
+
+        virtual public string Description
         {
             get;
             protected set;
         }
 
-        public Range Addr
+        virtual public Range Addr
         {
             get;
             protected set;
         }
 
-        public void ParseArgs(string[] Options)
+        virtual public void ParseArgs(string[] Options)
         {
 
         }
     }
 
     /// <summary>
-    /// Describes a file on a disk
+    /// Describes a file in a file syste,
     /// </summary>
-    public class FileChunkInfo : IChunkInfo
+    public class FileChunkInfo : ChunkInfo
     {
         public FileChunkInfo(Range Addr = null, string Description = null)
         {
-            if (string.IsNullOrEmpty(Description)) Description = "File on disk";
+            if (string.IsNullOrEmpty(Description)) Description = "File chunk";
             this.Description = Description;
             this.Addr = Addr;
         }
 
-        public DataTypes DumpType
+        public override string ID
         {
             get
             {
-                return Layout.DataTypes.Raw;
+                return "F";
             }
-        }
-
-        public string Description
-        {
-            get;
-            protected set;
-        }
-
-        public Range Addr
-        {
-            get;
-            protected set;
-        }
-
-        public void ParseArgs(string[] Options)
-        {
-
         }
     }
 
     /// <summary>
     /// Describes a chunk of graphics data
     /// </summary>
-    public class GfxChunkInfo : IChunkInfo
+    public class GfxChunkInfo : ChunkInfo
     {
         public GfxChunkInfo(Range Addr = null, string Description = null)
         {
@@ -133,24 +134,20 @@ namespace dumplib.Layout
             this.Subpalette = null;
         }
 
-        public DataTypes DumpType
+        public override string ID
+        {
+            get
+            {
+                return "G";
+            }
+        }
+
+        public override DataTypes DumpType
         {
             get
             {
                 return Layout.DataTypes.Gfx;
             }
-        }
-
-        public string Description
-        {
-            get;
-            protected set;
-        }
-
-        public Range Addr
-        {
-            get;
-            protected set;
         }
 
         public string TileConverter
@@ -164,7 +161,6 @@ namespace dumplib.Layout
             get;
             set;
         }
-
 
         private int? tilesperrow;
         public int? TilesPerRow
@@ -180,7 +176,7 @@ namespace dumplib.Layout
             }
         }
 
-        public void ParseArgs(string[] Options)
+        public override void ParseArgs(string[] Options)
         {
             if (Options != null && Options.Length > 0)
             {
@@ -209,7 +205,7 @@ namespace dumplib.Layout
     /// <summary>
     /// Describes a chunk of text data
     /// </summary>
-    public class TextChunkInfo : IChunkInfo
+    public class TextChunkInfo : ChunkInfo
     {
         // Block of in-game text
 
@@ -224,24 +220,20 @@ namespace dumplib.Layout
             this.TableID = null;
         }
 
-        public DataTypes DumpType
+        public override string ID
+        {
+            get
+            {
+                return "T";
+            }
+        }
+
+        public override DataTypes DumpType
         {
             get
             {
                 return Layout.DataTypes.Text;
             }
-        }
-
-        public Range Addr
-        {
-            get;
-            private set;
-        }
-
-        public string Description
-        {
-            get;
-            private set;
         }
 
         public bool? UseTextTable
@@ -262,7 +254,7 @@ namespace dumplib.Layout
             set;
         }
 
-        public void ParseArgs(string[] Options)
+        public override void ParseArgs(string[] Options)
         {
             if (Options != null && Options.Length > 0)
             {
@@ -301,46 +293,29 @@ namespace dumplib.Layout
     /// <summary>
     /// Describes a chunk of compiled, machine language code
     /// </summary>
-    public class CodeChunkInfo : IChunkInfo
+    public class CodeChunkInfo : ChunkInfo
     {
         // Block of compiled code
 
         public CodeChunkInfo(Range Addr = null, string Description = null)
         {
             this.Addr = Addr;
-            if (string.IsNullOrEmpty(Description)) Description = "Code chunk";
+            if (string.IsNullOrEmpty(Description)) Description = "Machine code chunk";
             this.Description = Description;
         }
 
-        public DataTypes DumpType
+        public override string ID
         {
             get
             {
-                return Layout.DataTypes.Raw;
+                return "P";
             }
         }
 
-        public string Description
+        public string Architecture
         {
             get;
-            private set;
-        }
-
-        public Range Addr
-        {
-            get;
-            private set;
-        }
-
-        private string cpu;
-        public string CPU
-        {
-            get { return this.cpu; }
-        }
-
-        public void ParseArgs(string[] Options)
-        {
-
+            set;
         }
     }
 
@@ -348,45 +323,28 @@ namespace dumplib.Layout
     /// Describes a chunk of compressed data
     /// (this will be further fleshed out as the Compression functions are added to dumpster)
     /// </summary>
-    public class CompressedChunkInfo : IChunkInfo
+    public class CompressedChunkInfo : ChunkInfo
     {
+        public CompressedChunkInfo(Range Addr = null, string Description = null)
+        {
+            if (string.IsNullOrEmpty(Description)) Description = "Compressed chunk";
+            this.Description = Description;
+            this.Addr = Addr;
+
+        }
+
         public IChunkInfo DecompressedType
         {
             get;
             private set;
         }
 
-        public DataTypes DumpType
+        public override string ID
         {
             get
             {
-                return Layout.DataTypes.Raw;
+                return "C";
             }
-        }
-
-        public Range Addr
-        {
-            get;
-            private set;
-        }
-
-        public string Description
-        {
-            get;
-            private set;
-        }
-
-        public void ParseArgs(string[] Options)
-        {
-
-        }
-
-        public CompressedChunkInfo(Range Addr = null, string Description = null)
-        {
-            if (string.IsNullOrEmpty(Description)) Description = "Compressed chunk";
-            this.Description = Description;
-            this.Addr = Addr;
-            
         }
     }
 }

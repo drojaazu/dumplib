@@ -3,9 +3,9 @@ using System.IO;
 
 namespace dumplib.Image
 {
-    public class UNK_ROM : MediaImage
+    public class UnknownImage : MediaImage
     {
-        public UNK_ROM(Stream Datastream, IDumpConverter Converter = null)
+        public UnknownImage(Stream Datastream, IDumpConverter Converter = null)
             : base(Datastream, Converter)
         {
             base.MediaType = MediaTypes.ROM;

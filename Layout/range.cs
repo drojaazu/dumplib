@@ -4,9 +4,6 @@ using System.Text;
 
 namespace dumplib.Layout
 {
-    /// <summary>
-    /// References a location inside a serial block of data
-    /// </summary>
     public class Range
     {
         public override string ToString()
@@ -35,7 +32,7 @@ namespace dumplib.Layout
         }
 
         /// <summary>
-        /// Defines the boundaries of a section of data inside a sequential data structure
+        /// Defines a location inside a serial block of data
         /// </summary>
         /// <param name="Offset">Starting index of the data</param>
         /// <param name="Length">Number of bytes</param>
@@ -48,7 +45,7 @@ namespace dumplib.Layout
         }
 
         /// <summary>
-        /// Defines the boundaries of a section of data inside a sequential data structure
+        /// Defines a location inside a serial block of data
         /// </summary>
         /// <param name="Offset">Starting index of the data (Input must be a properly formatted hex string)</param>
         /// <param name="Length">Number of bytes (Input must be a properly formatted hex string)</param>

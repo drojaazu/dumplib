@@ -16,7 +16,7 @@ namespace dumplib.Layout
         public IChunkInfo Info
         {
             get;
-            private set;
+            protected set;
         }
 
         /// <summary>
@@ -25,7 +25,7 @@ namespace dumplib.Layout
         public byte[] Data
         {
             get;
-            private set;
+            protected set;
         }
 
         public DataChunk(byte[] Data, IChunkInfo Info = null)

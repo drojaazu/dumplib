@@ -11,7 +11,7 @@ namespace dumplib.Layout
     /// </summary>
     public class ImageMap
     {
-        public static Dictionary<string, Type> ChunkTypes = new Dictionary<string, Type>()
+        private static Dictionary<string, Type> chunktypes = new Dictionary<string, Type>()
         {
             {"D", typeof(ChunkInfo)},    
             {"T", typeof(TextChunkInfo)},
@@ -21,9 +21,27 @@ namespace dumplib.Layout
             {"F", typeof(FileChunkInfo)}
         };
 
+        public static void RegisterType(IChunkInfo ChunkInfo)
+        {
+            if (ChunkInfo == null) throw new ArgumentNullException();
+            ImageMap.chunktypes.Add(ChunkInfo.ID, typeof(ChunkInfo));
+        }
+        
+        /// <summary>
+        /// Dictionary of available chunk info types for instantiation
+        /// </summary>
+        public static Dictionary<string, Type> ChunkTypes
+        {
+            get
+            {
+                return chunktypes;
+            }
+        }
+
         #region     CONSTRUCTOR -=:=-=:=-=:=--=:=-=:=-=:=--=:=-=:=-=:=--=:=-=:=-=:=--=:=- CONSTRUCTOR
         public ImageMap(Stream Datastream, string Description = null)
         {
+            
             if (Datastream == null) throw new ArgumentNullException();
             
             Datastream.Seek(0, SeekOrigin.Begin);
@@ -81,16 +99,7 @@ namespace dumplib.Layout
             this.Description = Description;
         }
 
-        /*public ImageMap(IList<IChunkInfo> InitList, string Description = null)
-        {
-            if (InitList == null) throw new ArgumentNullException("Initial list cannot be null.");
-            this.Entries = InitList;
-            this.Description = Description;
-        }*/
-
         #endregion  CONSTRUCTOR -=:=-=:=-=:=--=:=-=:=-=:=--=:=-=:=-=:=--=:=-=:=-=:=--=:=- CONSTRUCTOR
-
-        #region     PUBLIC MEMBERS -=:=-=:=-=:=--=:=-=:=-=:=--=:=-=:=-=:=--=:=-=:=-=:=--=:=- PUBLIC MEMBERS
 
         /// <summary>
         /// Short description of the image map
@@ -120,15 +129,13 @@ namespace dumplib.Layout
             this.Entries.Add(NewEntry);
         }
 
-        #endregion  PUBLIC MEMBERS -=:=-=:=-=:=--=:=-=:=-=:=--=:=-=:=-=:=--=:=-=:=-=:=--=:=- PUBLIC MEMBERS
-
-        #region     PRIVATE MEMBERS -=:=-=:=-=:=--=:=-=:=-=:=--=:=-=:=-=:=--=:=-=:=-=:=--=:=- PRIVATE MEMBERS
-
-        // returns a ChunkEntry object from a line in the definition file
-        // May 2014 - oh boy more uncommented code. At least this is relatively simple
-        // time to rewrite and comment!
         private Layout.IChunkInfo ParseLine(string text)
         {
+            // returns a ChunkEntry object from a line in the imp file
+
+            // May 2014 - oh boy more uncommented code. At least this is relatively simple
+            // time to rewrite and comment!
+
             // do some simple checks to make sure the line is valid
             if (!text.Contains("[") || !text.Contains("]") ||
                 !(text.Contains("-") || text.Contains("+")) ||
@@ -174,12 +181,11 @@ namespace dumplib.Layout
             object[] thisinfo = new object[2];
             thisinfo[0] = new Range(first, second);
             thisinfo[1] = desc;
-            IChunkInfo _out = Activator.CreateInstance(ChunkTypes[text.Substring(0, 1).ToUpper()],thisinfo) as IChunkInfo;
+            IChunkInfo _out = Activator.CreateInstance(chunktypes[text.Substring(0, 1).ToUpper()],thisinfo) as IChunkInfo;
 
             if(args != null && args.Length > 0) _out.ParseArgs(args);
 
             return _out;
         }
-        #endregion PRIVATE MEMBERS -=:=-=:=-=:=--=:=-=:=-=:=--=:=-=:=-=:=--=:=-=:=-=:=--=:=- PRIVATE MEMBERS
     }
 }
